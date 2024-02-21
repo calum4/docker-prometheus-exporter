@@ -26,3 +26,7 @@ features = ["rt", "macros", "rt-multi-thread", "signal"]
 [dependencies.metrics-exporter-prometheus]
 version = "0.13.1"
 features = ["http-listener"]
+
+[dependencies.docker-api]
+version = "0.14.0"
+default-features = false

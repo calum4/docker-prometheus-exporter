@@ -5,6 +5,7 @@ use std::{env, fs};
 #[derive(Debug)]
 pub struct ConfigEnv {
     pub config_path: Option<String>,
+    pub docker_host: Option<String>,
 }
 
 #[derive(Deserialize, PartialEq, Debug, Clone)]
@@ -37,6 +38,7 @@ fn get_config() -> Config {
 fn get_config_env() -> ConfigEnv {
     ConfigEnv {
         config_path: env::var("CONFIG_PATH").ok(),
+        docker_host: env::var("DOCKER_HOST").ok()
     }
 }
 
