@@ -28,7 +28,7 @@ async fn main() {
             None => {
                 #[cfg(unix)]
                 {
-                    "unix://var/run/docker.sock"
+                    "unix:///var/run/docker.sock"
                 }
 
                 #[cfg(not(unix))]
@@ -39,14 +39,10 @@ async fn main() {
             Some(host) => host,
         };
 
-        dbg!(host);
-
         Docker::new(host).expect("Failed to connect to Docker!")
     };
 
-    let test = docker.ping().await.expect("Failed to connect to Docker!");
-
-    dbg!(test, docker.info().await);
+    docker.ping().await.expect("Failed to connect to Docker!");
 
     info!("Ready!");
 
