@@ -1,23 +1,22 @@
+use std::sync::Arc;
 use docker_api::Docker;
 use metrics_exporter_prometheus::PrometheusBuilder;
 use tokio::signal;
-use tracing::info;
+use tracing::{info};
+use tracing_subscriber::EnvFilter;
+use tracing_subscriber::fmt::format::FmtSpan;
 use crate::config::CONFIG_ENV;
+use crate::metrics::load;
 
 mod config;
-
-pub(crate) trait Metric {
-
-}
-
+mod metrics;
 
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt()
-        //.compact() // TODO - Decide if to use compact or standard
-        .with_file(true)
-        .with_line_number(true)
-        .with_target(false)
+        .compact()
+        .with_env_filter(EnvFilter::from_default_env())
+        .with_span_events(FmtSpan::CLOSE)
         .init();
 
     let builder = PrometheusBuilder::new();
@@ -39,10 +38,10 @@ async fn main() {
             Some(host) => host,
         };
 
-        Docker::new(host).expect("Failed to connect to Docker!")
+        Docker::new(host).unwrap()
     };
 
-    docker.ping().await.expect("Failed to connect to Docker!");
+    load(Arc::new(docker));
 
     info!("Ready!");
 
