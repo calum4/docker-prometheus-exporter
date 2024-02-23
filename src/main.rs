@@ -22,6 +22,9 @@ async fn main() {
     let builder = PrometheusBuilder::new();
     builder.install().expect("Failed to install Prometheus Exporter");
 
+    info!("test?");
+    println!("HI");
+
     let docker = {
         let host = match &CONFIG_ENV.docker_host {
             None => {
