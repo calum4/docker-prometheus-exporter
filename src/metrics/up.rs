@@ -7,25 +7,33 @@ use metrics::{describe_gauge, gauge, Gauge};
 use tracing::instrument;
 use crate::metrics::Metric;
 
-pub(crate) struct DockerUp {
+pub(crate) struct UpMetric {
     metric: Gauge,
     docker: Arc<Docker>,
 }
 
-impl DockerUp {
+impl UpMetric {
     pub(crate) fn new(docker: Arc<Docker>) -> Self {
-        let gauge = gauge!(DockerUp::NAME);
-        describe_gauge!(DockerUp::NAME, DockerUp::DESCRIPTION);
+        let gauge = gauge!(UpMetric::NAME);
+        describe_gauge!(UpMetric::NAME, UpMetric::DESCRIPTION);
 
-        DockerUp {
+        UpMetric {
             metric: gauge,
             docker,
         }
     }
 }
 
+impl Debug for UpMetric {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Metric")
+            .field("name", &Self::NAME)
+            .finish()
+    }
+}
+
 #[async_trait]
-impl Metric for DockerUp {
+impl Metric for UpMetric {
     const NAME: &'static str = "docker_up";
     const DESCRIPTION: &'static str = "Reports the state of Docker";
     const INTERVAL: Duration = Duration::from_secs(5);
@@ -38,13 +46,5 @@ impl Metric for DockerUp {
         };
 
         self.metric.set(up);
-    }
-}
-
-impl Debug for DockerUp {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Metric")
-            .field("name", &Self::NAME)
-            .finish()
     }
 }
