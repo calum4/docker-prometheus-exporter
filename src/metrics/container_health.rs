@@ -53,7 +53,9 @@ impl Metric for ContainerHealthMetric {
         };
 
         for container in list {
-            debug!(container.id, "Fetching metrics");
+            let truncated_id = container.id.clone().map(|id| id[..12].to_string());
+
+            debug!(container.id = truncated_id, "Fetching metrics");
 
             let Some(id) = container.id else {
                 continue
@@ -62,14 +64,14 @@ impl Metric for ContainerHealthMetric {
             let inspect = match containers.get(id).inspect().await {
                 Ok(inspect) => inspect,
                 Err(error) => {
-                    error!("Encountered error when inspecting container! {error}");
+                    error!(container.id = truncated_id, "Encountered error when inspecting container! {error}");
                     // TODO - Report as unhealthy?
                     return;
                 }
             };
 
             let Some(state) = inspect.state else {
-                error!("Container state was none!");
+                error!(container.id = truncated_id, "Container state was none!");
                 // TODO - Report as unhealthy?
                 return;
             };
