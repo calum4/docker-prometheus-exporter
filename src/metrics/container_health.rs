@@ -75,8 +75,6 @@ impl Metric for ContainerHealthMetric {
                 // TODO - Report as unhealthy?
                 return;
             };
-
-            dbg!(state);
         }
     }
 }

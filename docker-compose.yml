@@ -1,7 +1,11 @@
 services:
   docker-prometheus-exporter:
+    container_name: docker-prometheus-exporter
     build: .
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - RUST_LOG=info
+      - RUST_LOG=debug # TODO - Revert to info
+    expose:
+      - 9000:9000
+    restart: unless-stopped
