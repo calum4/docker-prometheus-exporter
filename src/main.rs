@@ -14,7 +14,9 @@ mod metrics;
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt()
-        .compact()
+        .with_target(false)
+        .with_file(true)
+        .with_line_number(true)
         .with_env_filter(EnvFilter::from_default_env())
         .with_span_events(FmtSpan::CLOSE)
         .init();

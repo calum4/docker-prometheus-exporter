@@ -15,7 +15,7 @@ trait Metric where Self: Send + 'static {
     const DESCRIPTION: &'static str;
     const INTERVAL: Duration;
 
-    async fn update(&self);
+    async fn update(&mut self);
 
     fn get_interval(&self) -> Duration {
         Self::INTERVAL
@@ -27,7 +27,7 @@ pub(crate) fn load(docker: Arc<Docker>) {
     start(ContainerHealthMetric::new(docker.clone()));
 }
 
-fn start(metric: impl Metric) {
+fn start(mut metric: impl Metric) {
     tokio::spawn(async move {
         let mut interval = interval(metric.get_interval());
 
