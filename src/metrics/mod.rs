@@ -3,6 +3,7 @@ use std::time::Duration;
 use async_trait::async_trait;
 use docker_api::Docker;
 use tokio::time::interval;
+use crate::metrics::container_health::ContainerHealthMetric;
 use crate::metrics::up::UpMetric;
 // use crate::metrics::container_health::ContainerHealthMetric;
 // use crate::metrics::up::UpMetric;
@@ -25,7 +26,7 @@ trait Metric where Self: Send + 'static {
 
 pub(crate) fn load(docker: Arc<Docker>) {
     start(UpMetric::new(docker.clone()));
-    // start(ContainerHealthMetric::new(docker.clone()));
+    start(ContainerHealthMetric::new(docker.clone()));
 }
 
 fn start(mut metric: impl Metric) {
