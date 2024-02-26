@@ -7,5 +7,7 @@ services:
     environment:
       - RUST_LOG=info,docker_prometheus_exporter=debug # TODO - Revert to info
     expose:
-      - 9000:9000
+      - "9000:9000"
+    ports:
+      - "127.0.0.1:9000:9000"
     restart: unless-stopped

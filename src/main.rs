@@ -1,13 +1,15 @@
-use std::net::SocketAddr;
+use std::net::{Ipv4Addr, SocketAddr};
 use std::sync::Arc;
 use axum::{Router, serve};
+use axum::extract::{OriginalUri};
 use axum::http::StatusCode;
 use axum::routing::get;
+use axum_client_ip::{SecureClientIp, SecureClientIpSource};
 use docker_api::Docker;
 use prometheus::{Encoder, TextEncoder};
 use tokio::net::TcpListener;
 use tokio::signal;
-use tracing::{error, info};
+use tracing::{error, info, instrument};
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::fmt::format::FmtSpan;
 use crate::config::CONFIG_ENV;
@@ -55,7 +57,7 @@ async fn main() {
 }
 
 async fn start_http_server() {
-    let addr = SocketAddr::from(([127, 0, 0, 1], 9000));
+    let addr = SocketAddr::from((Ipv4Addr::UNSPECIFIED, 9000)); // TODO - Set from env vars
 
     let listener = match TcpListener::bind(addr).await {
         Ok(listener) => listener,
@@ -64,10 +66,11 @@ async fn start_http_server() {
 
     let router = Router::new()
         .route("/", get(serve_metrics))
-        .route("/metrics", get(serve_metrics));
+        .route("/metrics", get(serve_metrics))
+        .layer(SecureClientIpSource::ConnectInfo.into_extension());
 
     tokio::spawn(async move {
-        if let Err(error) = serve(listener, router).await {
+        if let Err(error) = serve(listener, router.into_make_service_with_connect_info::<SocketAddr>()).await {
             panic!("{error}");
         }
 
@@ -75,8 +78,8 @@ async fn start_http_server() {
     });
 }
 
-// TODO - Instrument with client ip and req path
-async fn serve_metrics() -> Result<String, StatusCode> {
+#[instrument(fields(path=path.path()))]
+async fn serve_metrics(SecureClientIp(ip): SecureClientIp, OriginalUri(path): OriginalUri) -> Result<String, StatusCode> {
     let encoder = TextEncoder::new();
 
     let metric_families = prometheus::gather();
