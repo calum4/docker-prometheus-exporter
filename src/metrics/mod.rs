@@ -5,8 +5,6 @@ use docker_api::Docker;
 use tokio::time::interval;
 use crate::metrics::container_health::ContainerHealthMetric;
 use crate::metrics::up::UpMetric;
-// use crate::metrics::container_health::ContainerHealthMetric;
-// use crate::metrics::up::UpMetric;
 
 pub(crate) mod up;
 mod container_health;
