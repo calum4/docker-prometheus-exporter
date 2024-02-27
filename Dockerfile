@@ -5,8 +5,12 @@ COPY Cargo.lock Cargo.toml ./
 COPY src/ src/
 RUN echo "$BUILD_ENVIRONMENT" > .env && cargo install --path .
 
-FROM debian:bookworm as app
-RUN apt-get update && apt install -y curl
+FROM debian:bookworm-slim as app
+
+RUN apt update \
+    && apt install -y curl \
+    && rm -rf /var/lib/apt/lists/* \
+
 WORKDIR /docker-prometheus-exporter
 COPY --from=builder /usr/local/cargo/bin/docker-prometheus-exporter ./docker-prometheus-exporter
 

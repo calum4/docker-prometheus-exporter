@@ -60,10 +60,7 @@ async fn main() {
 async fn start_http_server() {
     let addr = SocketAddr::from((CONFIG_ENV.listen_addr, CONFIG_ENV.listen_port));
 
-    let listener = match TcpListener::bind(addr).await {
-        Ok(listener) => listener,
-        Err(error) => panic!("{error}"),
-    };
+    let listener = TcpListener::bind(addr).await.unwrap();
 
     let router = Router::new()
         .route("/", get(serve_metrics))
