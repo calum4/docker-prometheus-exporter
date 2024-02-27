@@ -5,7 +5,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - RUST_LOG=info,docker_prometheus_exporter=debug # TODO - Revert to info
+      - RUST_LOG=info,docker_prometheus_exporter=info
     expose:
       - "9000:9000"
     ports:

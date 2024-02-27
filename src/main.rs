@@ -1,4 +1,4 @@
-use std::net::{Ipv4Addr, SocketAddr};
+use std::net::SocketAddr;
 use std::sync::Arc;
 use axum::{Router, serve};
 use axum::extract::{OriginalUri};
@@ -58,7 +58,7 @@ async fn main() {
 }
 
 async fn start_http_server() {
-    let addr = SocketAddr::from((Ipv4Addr::UNSPECIFIED, 9000)); // TODO - Set from env vars
+    let addr = SocketAddr::from((CONFIG_ENV.listen_addr, CONFIG_ENV.listen_port));
 
     let listener = match TcpListener::bind(addr).await {
         Ok(listener) => listener,
@@ -71,12 +71,10 @@ async fn start_http_server() {
         .layer(SecureClientIpSource::ConnectInfo.into_extension());
 
     tokio::spawn(async move {
-        if let Err(error) = serve(listener, router.into_make_service_with_connect_info::<SocketAddr>()).await {
-            panic!("{error}");
-        }
-
-        info!("Listening on http://{addr}");
+        serve(listener, router.into_make_service_with_connect_info::<SocketAddr>()).await.unwrap()
     });
+
+    info!("Listening on http://{addr}");
 }
 
 #[instrument(fields(path=path.path()))]
