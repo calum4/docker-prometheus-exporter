@@ -2,22 +2,19 @@ use std::sync::Arc;
 use std::time::Duration;
 use async_trait::async_trait;
 use docker_api::Docker;
-use metrics::{describe_gauge, gauge, Gauge};
+use prometheus::{IntGauge, register_int_gauge};
 use tracing::instrument;
 use crate::metrics::Metric;
 
 pub(crate) struct UpMetric {
-    metric: Gauge,
+    metric: IntGauge,
     docker: Arc<Docker>,
 }
 
 impl UpMetric {
     pub(crate) fn new(docker: Arc<Docker>) -> Self {
-        let gauge = gauge!(UpMetric::NAME);
-        describe_gauge!(UpMetric::NAME, UpMetric::DESCRIPTION);
-
         UpMetric {
-            metric: gauge,
+            metric: register_int_gauge!(Self::NAME, Self::DESCRIPTION).unwrap(),
             docker,
         }
     }
@@ -32,8 +29,8 @@ impl Metric for UpMetric {
     #[instrument(skip(self),fields(metric=Self::NAME))]
     async fn update(&mut self) {
         let up = match self.docker.ping().await {
-            Ok(_) => 1_f64,
-            Err(_) => 0_f64,
+            Ok(_) => 1,
+            Err(_) => 0,
         };
 
         self.metric.set(up);

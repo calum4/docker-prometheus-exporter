@@ -5,41 +5,72 @@ use async_trait::async_trait;
 use docker_api::Docker;
 use docker_api::models::{ContainerState, ContainerSummary};
 use docker_api::opts::{ContainerListOpts};
-use metrics::{describe_gauge, gauge, Gauge};
+use prometheus::{IntGaugeVec, Opts, register_int_gauge_vec};
 use tracing::{debug_span, error, instrument};
+use crate::helpers::ContainerId;
 use crate::metrics::Metric;
 
-type ContainerId = String;
 type ContainerName = String;
 
+struct MetricLabels {
+    id: ContainerId,
+    name: ContainerName,
+}
+
 pub(crate) struct ContainerHealthMetric {
-    metrics: HashMap<ContainerId, Gauge>,
+    metric: IntGaugeVec,
+    cache: HashMap<ContainerId, MetricLabels>,
     docker: Arc<Docker>,
 }
 
 impl ContainerHealthMetric {
+    const LABEL_NAMES: [&'static str; 2] = ["id", "name"];
+
     pub(crate) fn new(docker: Arc<Docker>) -> Self {
-        ContainerHealthMetric {
-            metrics: HashMap::new(),
+        let opts = Opts::new(Self::NAME, Self::DESCRIPTION);
+
+        Self {
+            metric: register_int_gauge_vec!(opts, &Self::LABEL_NAMES).unwrap(),
+            cache: HashMap::new(),
             docker,
         }
     }
 
     fn finish_update(&mut self, values: Vec<(ContainerId, ContainerName, HealthStatus)>) {
-        let new_metrics: HashMap<ContainerId, Gauge> = HashMap::with_capacity(values.len());
+        for (id, name, value) in &values {
+            let gauge = match self.metric.get_metric_with_label_values(&[id.get(), name.as_str()]) {
+                Ok(gauge) => gauge,
+                Err(error) => {
+                    error!(?id, "{error}");
+                    continue
+                }
+            };
 
-        for (id, name, value) in values {
-            let gauge = self.metrics.remove(&id).unwrap_or_else(|| {
-                let gauge = gauge!(ContainerHealthMetric::NAME, "id"=>id, "name"=>name);
-                describe_gauge!(ContainerHealthMetric::NAME, ContainerHealthMetric::DESCRIPTION);
+            let id = id.clone();
 
-                gauge
+            gauge.set(value.into());
+            self.cache.insert(id.clone(), MetricLabels {
+                id,
+                name: name.clone(),
             });
-
-            gauge.set::<f64>(value.into());
         }
 
-        self.metrics = new_metrics; // TODO - Dropping the old vec doesn't unregister previous metrics
+        let remove_ids = self.cache.keys()
+            .filter(|id| !values.iter().any(|(v_id, _, _)| &v_id == id))
+            .cloned()
+            .collect::<Vec<_>>();
+
+        for id in remove_ids {
+            let Some(cached_metric) = self.cache.remove(&id) else {
+                continue
+            };
+
+            let values = [cached_metric.id.get(), cached_metric.name.as_str()];
+
+            if let Err(error) = self.metric.remove_label_values(&values) {
+                error!(?id, "{error}");
+            };
+        }
     }
 }
 
@@ -56,7 +87,7 @@ impl Metric for ContainerHealthMetric {
         let summaries = match containers.list(&ContainerListOpts::builder().all(true).build()).await {
             Ok(list) => list,
             Err(error) => {
-                error!("Encountered error when fetching container list! {error}");
+                error!("{error}");
                 self.finish_update(vec![]);
                 return;
             }
@@ -70,33 +101,33 @@ impl Metric for ContainerHealthMetric {
                 continue
             };
 
-            let truncated_id = id[..12].to_string();
+            let id = ContainerId::from(id.clone());
 
-            let span = debug_span!("inspect", "id"=truncated_id);
+            let span = debug_span!("inspect", ?id);
             let _ = span.enter();
 
             let name = match get_container_name(&container) {
                 None => {
-                    error!(id=truncated_id, "Unable to fetch name from container!");
+                    error!(?id, "Unable to fetch name from container!");
                     continue
                 }
                 Some(name) => name,
             };
 
-            let inspect = match containers.get(id).inspect().await {
+            let inspect = match containers.get(id.get()).inspect().await {
                 Ok(inspect) => inspect,
                 Err(error) => {
-                    error!(id=truncated_id, "Encountered error when inspecting container! {error}");
+                    error!(?id, "{error}");
                     continue
                 }
             };
 
             let Some(state) = inspect.state else {
-                error!(id=truncated_id, "Container state was none!");
+                error!(?id, "Container state was none!");
                 continue
             };
 
-            values.push((id.clone(), name, state.into()));
+            values.push((id, name, state.into()));
         }
 
         self.finish_update(values);
@@ -111,14 +142,14 @@ enum HealthStatus {
     Healthy,
 }
 
-impl From<HealthStatus> for f64 {
-    fn from(value: HealthStatus) -> Self {
+impl From<&HealthStatus> for i64 {
+    fn from(value: &HealthStatus) -> Self {
         match value {
-            HealthStatus::Unknown => 0_f64,
-            HealthStatus::Stopped => 1_f64,
-            HealthStatus::NoHealthCheck => 2_f64,
-            HealthStatus::Unhealthy => 3_f64,
-            HealthStatus::Healthy => 4_f64,
+            HealthStatus::Unknown => 0,
+            HealthStatus::Stopped => 1,
+            HealthStatus::NoHealthCheck => 2,
+            HealthStatus::Unhealthy => 3,
+            HealthStatus::Healthy => 4,
         }
     }
 }

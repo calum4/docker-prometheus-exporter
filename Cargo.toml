@@ -8,8 +8,10 @@ edition = "2021"
 [dependencies]
 tracing = "0.1"
 serde_yaml = "0.9"
-metrics = "0.22.1"
 async-trait = "0.1.77"
+prometheus = "0.13.3"
+axum = "0.7.4"
+axum-client-ip = "0.5.0"
 
 [dependencies.lazy_static]
 version = "1.4.0"
@@ -22,10 +24,6 @@ features = ["derive"]
 [dependencies.tokio]
 version = "1.33.0"
 features = ["rt", "macros", "rt-multi-thread", "signal"]
-
-[dependencies.metrics-exporter-prometheus]
-version = "0.13.1"
-features = ["http-listener"]
 
 [dependencies.docker-api]
 version = "0.14.0"
