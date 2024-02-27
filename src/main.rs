@@ -17,6 +17,7 @@ use crate::metrics::load;
 
 mod config;
 mod metrics;
+mod helpers;
 
 #[tokio::main]
 async fn main() {

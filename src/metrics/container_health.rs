@@ -5,22 +5,21 @@ use async_trait::async_trait;
 use docker_api::Docker;
 use docker_api::models::{ContainerState, ContainerSummary};
 use docker_api::opts::{ContainerListOpts};
-use prometheus::{IntGauge, IntGaugeVec, Opts, register_int_gauge_vec};
+use prometheus::{IntGaugeVec, Opts, register_int_gauge_vec};
 use tracing::{debug_span, error, instrument};
+use crate::helpers::ContainerId;
 use crate::metrics::Metric;
 
-type ContainerId = String;
 type ContainerName = String;
 
-struct CachedMetric {
+struct MetricLabels {
     id: ContainerId,
     name: ContainerName,
-    metric: IntGauge,
 }
 
 pub(crate) struct ContainerHealthMetric {
     metric: IntGaugeVec,
-    cache: HashMap<ContainerId, CachedMetric>,
+    cache: HashMap<ContainerId, MetricLabels>,
     docker: Arc<Docker>,
 }
 
@@ -39,10 +38,10 @@ impl ContainerHealthMetric {
 
     fn finish_update(&mut self, values: Vec<(ContainerId, ContainerName, HealthStatus)>) {
         for (id, name, value) in &values {
-            let gauge = match self.metric.get_metric_with_label_values(&[id.as_str(), name.as_str()]) {
+            let gauge = match self.metric.get_metric_with_label_values(&[id.get(), name.as_str()]) {
                 Ok(gauge) => gauge,
                 Err(error) => {
-                    error!(id, "{error}"); // TODO - Truncate id to 12 chars
+                    error!(?id, "{error}");
                     continue
                 }
             };
@@ -50,10 +49,9 @@ impl ContainerHealthMetric {
             let id = id.clone();
 
             gauge.set(value.into());
-            self.cache.insert(id.clone(), CachedMetric {
+            self.cache.insert(id.clone(), MetricLabels {
                 id,
                 name: name.clone(),
-                metric: gauge,
             });
         }
 
@@ -67,10 +65,10 @@ impl ContainerHealthMetric {
                 continue
             };
 
-            let values = [cached_metric.id.as_str(), cached_metric.name.as_str()];
+            let values = [cached_metric.id.get(), cached_metric.name.as_str()];
 
             if let Err(error) = self.metric.remove_label_values(&values) {
-                error!(id, "{error}"); // TODO - Truncate id
+                error!(?id, "{error}");
             };
         }
     }
@@ -103,33 +101,33 @@ impl Metric for ContainerHealthMetric {
                 continue
             };
 
-            let truncated_id = id[..12].to_string();
+            let id = ContainerId::from(id.clone());
 
-            let span = debug_span!("inspect", "id"=truncated_id);
+            let span = debug_span!("inspect", ?id);
             let _ = span.enter();
 
             let name = match get_container_name(&container) {
                 None => {
-                    error!(id=truncated_id, "Unable to fetch name from container!");
+                    error!(?id, "Unable to fetch name from container!");
                     continue
                 }
                 Some(name) => name,
             };
 
-            let inspect = match containers.get(id).inspect().await {
+            let inspect = match containers.get(id.get()).inspect().await {
                 Ok(inspect) => inspect,
                 Err(error) => {
-                    error!(id=truncated_id, "{error}");
+                    error!(?id, "{error}");
                     continue
                 }
             };
 
             let Some(state) = inspect.state else {
-                error!(id=truncated_id, "Container state was none!");
+                error!(?id, "Container state was none!");
                 continue
             };
 
-            values.push((id.clone(), name, state.into()));
+            values.push((id, name, state.into()));
         }
 
         self.finish_update(values);
