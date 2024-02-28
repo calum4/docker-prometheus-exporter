@@ -1,7 +1,3 @@
-LABEL org.opencontainers.image.source="https://github.com/Calum4/docker-prometheus-exporter"
-LABEL org.opencontainers.image.description="Exports basic metrics from Docker for scraping by Prometheus"
-LABEL org.opencontainers.image.licenses=MIT
-
 FROM rust:bookworm as builder
 ARG BUILD_ENVIRONMENT
 WORKDIR /usr/src/docker-prometheus-exporter
@@ -9,7 +5,11 @@ COPY Cargo.lock Cargo.toml ./
 COPY src/ src/
 RUN echo "$BUILD_ENVIRONMENT" > .env && cargo install --path .
 
-FROM debian:bookworm-slim as app
+FROM debian:bookworm-slim as docker-prometheus-exporter
+
+LABEL org.opencontainers.image.source="https://github.com/Calum4/docker-prometheus-exporter"
+LABEL org.opencontainers.image.description="Exports basic metrics from Docker for scraping by Prometheus"
+LABEL org.opencontainers.image.licenses=MIT
 
 RUN apt update \
     && apt install -y curl \
