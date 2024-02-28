@@ -1,3 +1,7 @@
+LABEL org.opencontainers.image.source="https://github.com/Calum4/docker-prometheus-exporter"
+LABEL org.opencontainers.image.description="Exports basic metrics from Docker for scraping by Prometheus"
+LABEL org.opencontainers.image.licenses=MIT
+
 FROM rust:bookworm as builder
 ARG BUILD_ENVIRONMENT
 WORKDIR /usr/src/docker-prometheus-exporter
