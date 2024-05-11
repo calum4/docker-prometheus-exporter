@@ -34,5 +34,4 @@ services:
     ports:
       - "127.0.0.1:9000:9000"
     restart: unless-stopped
-
 ```
