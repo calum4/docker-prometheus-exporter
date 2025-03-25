@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
-use async_trait::async_trait;
 use docker_api::Docker;
 use docker_api::models::{ContainerState, ContainerSummary};
 use docker_api::opts::{ContainerListOpts};
@@ -74,7 +73,6 @@ impl ContainerHealthMetric {
     }
 }
 
-#[async_trait]
 impl Metric for ContainerHealthMetric {
     const NAME: &'static str = "container_health";
     const DESCRIPTION: &'static str = "Reports the health state of a Docker container";

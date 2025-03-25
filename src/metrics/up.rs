@@ -1,6 +1,5 @@
 use std::sync::Arc;
 use std::time::Duration;
-use async_trait::async_trait;
 use docker_api::Docker;
 use prometheus::{IntGauge, register_int_gauge};
 use tracing::instrument;
@@ -20,7 +19,6 @@ impl UpMetric {
     }
 }
 
-#[async_trait]
 impl Metric for UpMetric {
     const NAME: &'static str = "docker_up";
     const DESCRIPTION: &'static str = "Reports the state of Docker";
