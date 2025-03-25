@@ -1,23 +1,23 @@
-use std::net::SocketAddr;
-use std::sync::Arc;
-use axum::{Router, serve};
-use axum::extract::{OriginalUri};
+use crate::config::get_config;
+use crate::metrics::load;
+use axum::extract::OriginalUri;
 use axum::http::StatusCode;
 use axum::routing::get;
+use axum::{Router, serve};
 use axum_client_ip::{SecureClientIp, SecureClientIpSource};
 use docker_api::Docker;
 use prometheus::{Encoder, TextEncoder};
+use std::net::SocketAddr;
+use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::signal;
 use tracing::{error, info, instrument};
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::fmt::format::FmtSpan;
-use crate::config::get_config;
-use crate::metrics::load;
 
 mod config;
-mod metrics;
 mod helpers;
+mod metrics;
 
 #[cfg(debug_assertions)]
 fn start_tracing() {
@@ -84,14 +84,22 @@ async fn start_http_server() {
         .layer(SecureClientIpSource::ConnectInfo.into_extension());
 
     tokio::spawn(async move {
-        serve(listener, router.into_make_service_with_connect_info::<SocketAddr>()).await.unwrap()
+        serve(
+            listener,
+            router.into_make_service_with_connect_info::<SocketAddr>(),
+        )
+        .await
+        .unwrap()
     });
 
     info!("Listening on http://{addr}");
 }
 
 #[instrument(fields(path=path.path()))]
-async fn serve_metrics(SecureClientIp(ip): SecureClientIp, OriginalUri(path): OriginalUri) -> Result<String, StatusCode> {
+async fn serve_metrics(
+    SecureClientIp(ip): SecureClientIp,
+    OriginalUri(path): OriginalUri,
+) -> Result<String, StatusCode> {
     let encoder = TextEncoder::new();
 
     let metric_families = prometheus::gather();
