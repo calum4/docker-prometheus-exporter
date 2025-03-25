@@ -5,10 +5,10 @@ use axum::http::StatusCode;
 use axum::routing::get;
 use axum::{Router, serve};
 use axum_client_ip::{SecureClientIp, SecureClientIpSource};
-use docker_api::Docker;
 use prometheus::{Encoder, TextEncoder};
 use std::net::SocketAddr;
 use std::sync::Arc;
+use bollard::Docker;
 use tokio::net::TcpListener;
 use tokio::signal;
 use tracing::{error, info, instrument};
@@ -47,24 +47,7 @@ async fn main() {
 
     start_http_server().await;
 
-    let docker = {
-        let host = match &get_config().docker_host {
-            None => {
-                #[cfg(unix)]
-                {
-                    "unix:///var/run/docker.sock"
-                }
-
-                #[cfg(not(unix))]
-                {
-                    "tcp://127.0.0.1:2376"
-                }
-            }
-            Some(host) => host,
-        };
-
-        Docker::new(host).expect("unable to construct docker instance")
-    };
+    let docker = Docker::connect_with_local_defaults().expect("unable to connect to docker");
 
     load(Arc::new(docker));
 

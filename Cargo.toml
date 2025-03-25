@@ -10,14 +10,11 @@ tracing = "0.1.41"
 prometheus = "0.13.4"
 axum = "0.8.1"
 axum-client-ip = "0.7.0"
+bollard = "0.18.1"
 
 [dependencies.tokio]
 version = "1.44.1"
 features = ["rt", "macros", "rt-multi-thread", "signal"]
-
-[dependencies.docker-api]
-version = "0.14.0"
-default-features = false
 
 [dependencies.tracing-subscriber]
 version = "0.3.19"

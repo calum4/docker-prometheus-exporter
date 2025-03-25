@@ -15,7 +15,6 @@ Exports basic metrics from Docker to the defined endpoint with path `/` or `/met
 | Name          | Description                                                                                                                                       | Default                                                                 |
 |---------------|---------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
 | `RUST_LOG`    | Sets logging verbosity, see [documentation](https://docs.rs/tracing-subscriber/0.3.18/tracing_subscriber/filter/struct.EnvFilter.html#directives) | `info`                                                                  |
-| `DOCKER_HOST` | URI to the Docker API                                                                                                                             | Unix - `unix:///var/run/docker.sock`<br/>Other - `tcp://127.0.0.1:2376` |
 | `LISTEN_ADDR` | Metrics endpoint listen address                                                                                                                   | `0.0.0.0`                                                               |
 | `LISTEN_PORT` | Metrics endpoint listen port                                                                                                                      | `9000`                                                                  |
 

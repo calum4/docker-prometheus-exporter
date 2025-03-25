@@ -1,12 +1,12 @@
 use crate::helpers::ContainerId;
 use crate::metrics::Metric;
-use docker_api::Docker;
-use docker_api::models::{ContainerState, ContainerSummary};
-use docker_api::opts::ContainerListOpts;
 use prometheus::{IntGaugeVec, Opts, register_int_gauge_vec};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
+use bollard::container::ListContainersOptions;
+use bollard::Docker;
+use bollard::models::{ContainerState, ContainerStateStatusEnum, ContainerSummary, HealthStatusEnum};
 use tracing::{debug_span, error, instrument};
 
 type ContainerName = String;
@@ -89,12 +89,17 @@ impl Metric for ContainerHealthMetric {
 
     #[instrument(skip(self),fields(metric=Self::NAME))]
     async fn update(&mut self) {
-        let containers = self.docker.containers();
+        let filters: HashMap<&str, Vec<&str>> = HashMap::with_capacity(0);
+        // TODO - Filter by label option
 
-        let summaries = match containers
-            .list(&ContainerListOpts::builder().all(true).build())
-            .await
-        {
+        let options = ListContainersOptions {
+            all: true,
+            limit: None,
+            size: false,
+            filters,
+        };
+
+        let summaries = match self.docker.list_containers(Some(options)).await {
             Ok(list) => list,
             Err(error) => {
                 error!("{error}");
@@ -107,12 +112,13 @@ impl Metric for ContainerHealthMetric {
             Vec::with_capacity(summaries.len());
 
         for container in summaries {
-            let Some(id) = &container.id else {
-                error!("A container did not have an id!");
-                continue;
+            let id = match &container.id {
+                None => {
+                    error!("A container did not have an id!");
+                    continue;
+                }
+                Some(id) => ContainerId::from(id.clone()),
             };
-
-            let id = ContainerId::from(id.clone());
 
             let span = debug_span!("inspect", ?id);
             let _ = span.enter();
@@ -125,7 +131,7 @@ impl Metric for ContainerHealthMetric {
                 Some(name) => name,
             };
 
-            let inspect = match containers.get(id.get()).inspect().await {
+            let inspect = match self.docker.inspect_container(id.get(), None).await {
                 Ok(inspect) => inspect,
                 Err(error) => {
                     error!(?id, "{error}");
@@ -171,7 +177,7 @@ impl From<ContainerState> for HealthStatus {
             return HealthStatus::Unknown;
         };
 
-        if status != "running" {
+        if !matches!(status, ContainerStateStatusEnum::RUNNING) {
             return HealthStatus::Stopped;
         }
 
@@ -179,8 +185,8 @@ impl From<ContainerState> for HealthStatus {
             return HealthStatus::NoHealthCheck;
         };
 
-        match health.as_str() {
-            "healthy" => HealthStatus::Healthy,
+        match health {
+            HealthStatusEnum::HEALTHY => HealthStatus::Healthy,
             _ => HealthStatus::Unhealthy,
         }
     }
