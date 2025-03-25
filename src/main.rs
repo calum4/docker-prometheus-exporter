@@ -63,7 +63,7 @@ async fn main() {
             Some(host) => host,
         };
 
-        Docker::new(host).unwrap()
+        Docker::new(host).expect("unable to construct docker instance")
     };
 
     load(Arc::new(docker));
@@ -76,7 +76,9 @@ async fn main() {
 async fn start_http_server() {
     let addr = SocketAddr::from((get_config().listen_addr, get_config().listen_port));
 
-    let listener = TcpListener::bind(addr).await.unwrap();
+    let listener = TcpListener::bind(addr)
+        .await
+        .unwrap_or_else(|_| panic!("unable to bind to {addr}"));
 
     let router = Router::new()
         .route("/", get(serve_metrics))
@@ -89,7 +91,7 @@ async fn start_http_server() {
             router.into_make_service_with_connect_info::<SocketAddr>(),
         )
         .await
-        .unwrap()
+        .expect("unable to serve metrics")
     });
 
     info!("Listening on http://{addr}");
@@ -104,7 +106,9 @@ async fn serve_metrics(
 
     let metric_families = prometheus::gather();
     let mut buffer = vec![];
-    encoder.encode(&metric_families, &mut buffer).unwrap();
+    encoder
+        .encode(&metric_families, &mut buffer)
+        .expect("unable to encode metrics");
 
     match String::from_utf8(buffer) {
         Ok(string) => Ok(string),

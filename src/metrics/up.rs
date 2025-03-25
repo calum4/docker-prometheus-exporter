@@ -13,7 +13,8 @@ pub(crate) struct UpMetric {
 impl UpMetric {
     pub(crate) fn new(docker: Arc<Docker>) -> Self {
         UpMetric {
-            metric: register_int_gauge!(Self::NAME, Self::DESCRIPTION).unwrap(),
+            metric: register_int_gauge!(Self::NAME, Self::DESCRIPTION)
+                .expect("unable to register up metric"),
             docker,
         }
     }
