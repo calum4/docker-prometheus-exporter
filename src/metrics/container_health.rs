@@ -29,7 +29,8 @@ impl ContainerHealthMetric {
         let opts = Opts::new(Self::NAME, Self::DESCRIPTION);
 
         Self {
-            metric: register_int_gauge_vec!(opts, &Self::LABEL_NAMES).unwrap(),
+            metric: register_int_gauge_vec!(opts, &Self::LABEL_NAMES)
+                .expect("unable to register container_health metric"),
             cache: HashMap::new(),
             docker,
         }
