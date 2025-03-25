@@ -5,17 +5,15 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-tracing = "0.1"
-async-trait = "0.1.80"
+tracing = "0.1.41"
+async-trait = "0.1.88"
 prometheus = "0.13.4"
-axum = "0.7.5"
-axum-client-ip = "0.6.0"
+axum = "0.8.1"
+axum-client-ip = "0.7.0"
 
 [dependencies.tokio]
-version = "1.37.0"
+version = "1.44.1"
 features = ["rt", "macros", "rt-multi-thread", "signal"]
 
 [dependencies.docker-api]
@@ -23,5 +21,5 @@ version = "0.14.0"
 default-features = false
 
 [dependencies.tracing-subscriber]
-version = "0.3.18"
+version = "0.3.19"
 features = ["env-filter"]
