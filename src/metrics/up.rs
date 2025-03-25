@@ -1,9 +1,9 @@
-use std::sync::Arc;
-use std::time::Duration;
+use crate::metrics::Metric;
 use docker_api::Docker;
 use prometheus::{IntGauge, register_int_gauge};
+use std::sync::Arc;
+use std::time::Duration;
 use tracing::instrument;
-use crate::metrics::Metric;
 
 pub(crate) struct UpMetric {
     metric: IntGauge,
