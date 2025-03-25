@@ -5,7 +5,6 @@ use std::sync::OnceLock;
 
 #[derive(Debug)]
 pub struct Config {
-    pub docker_host: Option<String>,
     pub listen_addr: IpAddr,
     pub listen_port: u16,
 }
@@ -15,7 +14,6 @@ pub(crate) fn get_config() -> &'static Config {
 
     fn construct() -> Config {
         Config {
-            docker_host: env::var("DOCKER_HOST").ok(),
             listen_addr: env::var("LISTEN_ADDR")
                 .map(|addr| IpAddr::from_str(addr.as_str()).expect("Invalid LISTEN_ADDR provided"))
                 .unwrap_or(IpAddr::V4(Ipv4Addr::UNSPECIFIED)),

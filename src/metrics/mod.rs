@@ -1,8 +1,8 @@
 use crate::metrics::container_health::ContainerHealthMetric;
 use crate::metrics::up::UpMetric;
-use docker_api::Docker;
 use std::sync::Arc;
 use std::time::Duration;
+use bollard::Docker;
 use tokio::time::interval;
 
 mod container_health;
