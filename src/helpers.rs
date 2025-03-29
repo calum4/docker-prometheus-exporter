@@ -1,4 +1,5 @@
 use std::fmt::{Debug, Error, Formatter};
+use std::ops::Deref;
 use prometheus_client::encoding::{EncodeLabelValue, LabelValueEncoder};
 
 #[derive(Eq, Hash, PartialEq, Clone)]
@@ -11,12 +12,16 @@ impl From<String> for ContainerId {
 }
 
 impl ContainerId {
-    pub(crate) fn get(&self) -> &str {
-        self.0.as_str()
-    }
-
     pub(crate) fn get_short(&self) -> &str {
         &self.0[..12]
+    }
+}
+
+impl Deref for ContainerId {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 

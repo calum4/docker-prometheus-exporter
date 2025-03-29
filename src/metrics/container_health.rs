@@ -23,30 +23,19 @@ struct Labels {
 
 pub(crate) struct ContainerHealthMetric {
     metric: Family<Labels, Gauge>,
-    cache: HashMap<ContainerId, Labels>,
     docker: Arc<Docker>,
 }
 
 impl ContainerHealthMetric {
-    // TODO - Remove clones when instantiating Label
     fn finish_update(&mut self, values: Vec<(ContainerId, ContainerName, HealthStatus)>) {
         self.metric.clear();
 
-        for (id, name, value) in &values {
+        for (id, name, value) in values {
             let gauge = self
                 .metric
-                .get_or_create(&Labels { id: id.clone(), name: name.clone() });
-
-            let id = id.clone();
+                .get_or_create(&Labels { id, name });
 
             gauge.set(value.into());
-            self.cache.insert(
-                id.clone(),
-                Labels {
-                    id,
-                    name: name.clone(),
-                },
-            );
         }
     }
 }
@@ -63,7 +52,6 @@ impl Metric for ContainerHealthMetric {
 
         Self {
             metric,
-            cache: HashMap::new(),
             docker,
         }
     }
@@ -115,7 +103,7 @@ impl Metric for ContainerHealthMetric {
                 Some(name) => name,
             };
 
-            let inspect = match self.docker.inspect_container(id.get(), None).await {
+            let inspect = match self.docker.inspect_container(id.as_str(), None).await {
                 Ok(inspect) => inspect,
                 Err(error) => {
                     error!(?id, "{error}");
@@ -143,8 +131,8 @@ enum HealthStatus {
     Healthy,
 }
 
-impl From<&HealthStatus> for i64 {
-    fn from(value: &HealthStatus) -> Self {
+impl From<HealthStatus> for i64 {
+    fn from(value: HealthStatus) -> Self {
         match value {
             HealthStatus::Unknown => 0,
             HealthStatus::Stopped => 1,
@@ -179,6 +167,6 @@ impl From<ContainerState> for HealthStatus {
 fn get_container_name(container: &ContainerSummary) -> Option<ContainerName> {
     match &container.names {
         None => None,
-        Some(names) => names.first().map(|n| n[1..].to_string()),
+        Some(names) => names.first().cloned(),
     }
 }
