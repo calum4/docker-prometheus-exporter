@@ -30,6 +30,8 @@ pub(crate) struct ContainerHealthMetric {
 impl ContainerHealthMetric {
     // TODO - Remove clones when instantiating Label
     fn finish_update(&mut self, values: Vec<(ContainerId, ContainerName, HealthStatus)>) {
+        self.metric.clear();
+
         for (id, name, value) in &values {
             let gauge = self
                 .metric
@@ -45,22 +47,6 @@ impl ContainerHealthMetric {
                     name: name.clone(),
                 },
             );
-        }
-
-        // TODO - self.metric.clear()
-        let remove_ids = self
-            .cache
-            .keys()
-            .filter(|id| !values.iter().any(|(v_id, _, _)| &v_id == id))
-            .cloned()
-            .collect::<Vec<_>>();
-
-        for id in remove_ids {
-            let Some(cached_metric) = self.cache.remove(&id) else {
-                continue;
-            };
-
-            self.metric.remove(&Labels { id: cached_metric.id.clone(), name: cached_metric.name.clone() });
         }
     }
 }
