@@ -83,7 +83,7 @@ async fn start_http_server(metrics_registry: Arc<Registry>) {
     info!("Listening on http://{addr}");
 }
 
-#[instrument(fields(path=path.path()))]
+#[instrument(fields(path=path.path()), skip(metrics_registry))]
 async fn serve_metrics(
     SecureClientIp(ip): SecureClientIp,
     OriginalUri(path): OriginalUri,
