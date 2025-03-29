@@ -1,67 +1,53 @@
 use crate::helpers::ContainerId;
 use crate::metrics::Metric;
-use prometheus::{IntGaugeVec, Opts, register_int_gauge_vec};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 use bollard::container::ListContainersOptions;
 use bollard::Docker;
 use bollard::models::{ContainerState, ContainerStateStatusEnum, ContainerSummary, HealthStatusEnum};
+use prometheus_client::encoding::EncodeLabelSet;
+use prometheus_client::metrics::family::Family;
+use prometheus_client::metrics::gauge::Gauge;
+use prometheus_client::registry::Registry;
 use tracing::{debug_span, error, instrument};
 use crate::config::get_config;
 
 type ContainerName = String;
 
-struct MetricLabels {
+#[derive(Clone, Debug, Eq, Hash, PartialEq, EncodeLabelSet)]
+struct Labels {
     id: ContainerId,
     name: ContainerName,
 }
 
 pub(crate) struct ContainerHealthMetric {
-    metric: IntGaugeVec,
-    cache: HashMap<ContainerId, MetricLabels>,
+    metric: Family<Labels, Gauge>,
+    cache: HashMap<ContainerId, Labels>,
     docker: Arc<Docker>,
 }
 
 impl ContainerHealthMetric {
-    const LABEL_NAMES: [&'static str; 2] = ["id", "name"];
-
-    pub(crate) fn new(docker: Arc<Docker>) -> Self {
-        let opts = Opts::new(Self::NAME, Self::DESCRIPTION);
-
-        Self {
-            metric: register_int_gauge_vec!(opts, &Self::LABEL_NAMES)
-                .expect("unable to register container_health metric"),
-            cache: HashMap::new(),
-            docker,
-        }
-    }
-
+    // TODO - Remove clones when instantiating Label
     fn finish_update(&mut self, values: Vec<(ContainerId, ContainerName, HealthStatus)>) {
         for (id, name, value) in &values {
-            let gauge = match self
+            let gauge = self
                 .metric
-                .get_metric_with_label_values(&[id.get(), name.as_str()])
-            {
-                Ok(gauge) => gauge,
-                Err(error) => {
-                    error!(?id, "{error}");
-                    continue;
-                }
-            };
+                .get_or_create(&Labels { id: id.clone(), name: name.clone() });
 
             let id = id.clone();
 
             gauge.set(value.into());
             self.cache.insert(
                 id.clone(),
-                MetricLabels {
+                Labels {
                     id,
                     name: name.clone(),
                 },
             );
         }
 
+        // TODO - self.metric.clear()
         let remove_ids = self
             .cache
             .keys()
@@ -74,11 +60,7 @@ impl ContainerHealthMetric {
                 continue;
             };
 
-            let values = [cached_metric.id.get(), cached_metric.name.as_str()];
-
-            if let Err(error) = self.metric.remove_label_values(&values) {
-                error!(?id, "{error}");
-            };
+            self.metric.remove(&Labels { id: cached_metric.id.clone(), name: cached_metric.name.clone() });
         }
     }
 }
@@ -87,6 +69,18 @@ impl Metric for ContainerHealthMetric {
     const NAME: &'static str = "container_health";
     const DESCRIPTION: &'static str = "Reports the health state of a Docker container";
     const INTERVAL: Duration = Duration::from_secs(15);
+
+    fn new(registry: &mut Registry, docker: Arc<Docker>) -> Self {
+        let metric = Family::<Labels, Gauge>::default();
+
+        registry.register(Self::NAME, Self::DESCRIPTION, metric.clone());
+
+        Self {
+            metric,
+            cache: HashMap::new(),
+            docker,
+        }
+    }
 
     #[instrument(skip(self),fields(metric=Self::NAME))]
     async fn update(&mut self) {

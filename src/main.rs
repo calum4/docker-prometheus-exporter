@@ -2,14 +2,16 @@ use crate::config::get_config;
 use axum::extract::OriginalUri;
 use axum::http::StatusCode;
 use axum::routing::get;
-use axum::{Router, serve};
+use axum::{Router, serve, Extension};
 use axum_client_ip::{SecureClientIp, SecureClientIpSource};
-use prometheus::{Encoder, TextEncoder};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use bollard::Docker;
+use prometheus_client::encoding::text::encode;
+use prometheus_client::registry::Registry;
 use tokio::net::TcpListener;
 use tokio::signal;
+use tower_http::add_extension::AddExtensionLayer;
 use tracing::{error, info, instrument};
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::fmt::format::FmtSpan;
@@ -44,18 +46,19 @@ fn start_tracing() {
 async fn main() {
     start_tracing();
 
-    start_http_server().await;
-
     let docker = Docker::connect_with_local_defaults().expect("unable to connect to docker");
 
-    metrics::initialise(Arc::new(docker));
+    let mut metrics_registry = Registry::default();
+    metrics::initialise(&mut metrics_registry, Arc::new(docker));
+
+    start_http_server(Arc::new(metrics_registry)).await;
 
     info!("Ready!");
 
     signal::ctrl_c().await.expect("Failed to listen for CTRL+C");
 }
 
-async fn start_http_server() {
+async fn start_http_server(metrics_registry: Arc<Registry>) {
     let addr = SocketAddr::from((get_config().listen_addr, get_config().listen_port));
 
     let listener = TcpListener::bind(addr)
@@ -65,7 +68,8 @@ async fn start_http_server() {
     let router = Router::new()
         .route("/", get(serve_metrics))
         .route("/metrics", get(serve_metrics))
-        .layer(SecureClientIpSource::ConnectInfo.into_extension());
+        .layer(SecureClientIpSource::ConnectInfo.into_extension())
+        .layer(AddExtensionLayer::new(metrics_registry));
 
     tokio::spawn(async move {
         serve(
@@ -83,17 +87,12 @@ async fn start_http_server() {
 async fn serve_metrics(
     SecureClientIp(ip): SecureClientIp,
     OriginalUri(path): OriginalUri,
+    metrics_registry: Extension<Arc<Registry>>,
 ) -> Result<String, StatusCode> {
-    let encoder = TextEncoder::new();
+    let mut buffer = String::new();
 
-    let metric_families = prometheus::gather();
-    let mut buffer = vec![];
-    encoder
-        .encode(&metric_families, &mut buffer)
-        .expect("unable to encode metrics");
-
-    match String::from_utf8(buffer) {
-        Ok(string) => Ok(string),
+    match encode(&mut buffer, &metrics_registry) {
+        Ok(_) => Ok(buffer),
         Err(error) => {
             error!("{error}");
             Err(StatusCode::INTERNAL_SERVER_ERROR)
