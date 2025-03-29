@@ -68,6 +68,7 @@ async fn start_http_server(metrics_registry: Arc<Registry>) {
     let router = Router::new()
         .route("/", get(serve_metrics))
         .route("/metrics", get(serve_metrics))
+        .route("/ping", get(ping))
         .layer(SecureClientIpSource::ConnectInfo.into_extension())
         .layer(AddExtensionLayer::new(metrics_registry));
 
@@ -84,6 +85,7 @@ async fn start_http_server(metrics_registry: Arc<Registry>) {
 }
 
 #[instrument(fields(path=path.path()), skip(metrics_registry))]
+#[axum::debug_handler]
 async fn serve_metrics(
     SecureClientIp(ip): SecureClientIp,
     OriginalUri(path): OriginalUri,
@@ -98,4 +100,9 @@ async fn serve_metrics(
             Err(StatusCode::INTERNAL_SERVER_ERROR)
         }
     }
+}
+
+#[axum::debug_handler]
+async fn ping() -> (StatusCode, &'static str) {
+    (StatusCode::OK, "pong")
 }
