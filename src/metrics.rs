@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 use bollard::Docker;
+use prometheus_client::registry::Registry;
 use tokio::time::interval;
 
 mod container_health;
@@ -8,9 +9,9 @@ mod up;
 
 macro_rules! metrics {
     ($($metric:ty),+ $(,)?) => {
-        pub(crate) fn initialise(docker: Arc<Docker>) {
+        pub(crate) fn initialise(registry: &mut Registry, docker: Arc<Docker>) {
             $(
-                start(<$metric>::new(docker.clone()));
+                start(<$metric>::new(registry, docker.clone()));
             )*
         }
     };
@@ -29,6 +30,7 @@ where
     const DESCRIPTION: &'static str;
     const INTERVAL: Duration;
 
+    fn new(registry: &mut Registry, docker: Arc<Docker>) -> Self;
     fn update(&mut self) -> impl Future<Output = ()> + Send;
 }
 

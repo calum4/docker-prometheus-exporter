@@ -1,4 +1,5 @@
-use std::fmt::{Debug, Formatter};
+use std::fmt::{Debug, Error, Formatter};
+use prometheus_client::encoding::{EncodeLabelValue, LabelValueEncoder};
 
 #[derive(Eq, Hash, PartialEq, Clone)]
 pub(crate) struct ContainerId(String);
@@ -22,5 +23,11 @@ impl ContainerId {
 impl Debug for ContainerId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.get_short())
+    }
+}
+
+impl EncodeLabelValue for ContainerId {
+    fn encode(&self, encoder: &mut LabelValueEncoder) -> Result<(), Error> {
+        EncodeLabelValue::encode(&self.0.as_str(), encoder)
     }
 }
