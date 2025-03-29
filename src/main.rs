@@ -1,5 +1,4 @@
 use crate::config::get_config;
-use crate::metrics::load;
 use axum::extract::OriginalUri;
 use axum::http::StatusCode;
 use axum::routing::get;
@@ -49,7 +48,7 @@ async fn main() {
 
     let docker = Docker::connect_with_local_defaults().expect("unable to connect to docker");
 
-    load(Arc::new(docker));
+    metrics::initialise(Arc::new(docker));
 
     info!("Ready!");
 

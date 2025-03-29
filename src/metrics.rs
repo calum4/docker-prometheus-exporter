@@ -6,6 +6,21 @@ use tokio::time::interval;
 mod container_health;
 mod up;
 
+macro_rules! metrics {
+    ($($metric:ty),+ $(,)?) => {
+        pub(crate) fn initialise(docker: Arc<Docker>) {
+            $(
+                start(<$metric>::new(docker.clone()));
+            )*
+        }
+    };
+}
+
+metrics! {
+    up::UpMetric,
+    container_health::ContainerHealthMetric,
+}
+
 trait Metric
 where
     Self: Send + 'static,
@@ -15,11 +30,6 @@ where
     const INTERVAL: Duration;
 
     fn update(&mut self) -> impl Future<Output = ()> + Send;
-}
-
-pub(crate) fn load(docker: Arc<Docker>) {
-    start(up::UpMetric::new(docker.clone()));
-    start(container_health::ContainerHealthMetric::new(docker.clone()));
 }
 
 fn start<M>(mut metric: M)
