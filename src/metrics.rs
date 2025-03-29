@@ -1,12 +1,10 @@
-use crate::metrics::container_health::ContainerHealthMetric;
-use crate::metrics::up::UpMetric;
 use std::sync::Arc;
 use std::time::Duration;
 use bollard::Docker;
 use tokio::time::interval;
 
 mod container_health;
-pub(crate) mod up;
+mod up;
 
 trait Metric
 where
@@ -20,8 +18,8 @@ where
 }
 
 pub(crate) fn load(docker: Arc<Docker>) {
-    start(UpMetric::new(docker.clone()));
-    start(ContainerHealthMetric::new(docker.clone()));
+    start(up::UpMetric::new(docker.clone()));
+    start(container_health::ContainerHealthMetric::new(docker.clone()));
 }
 
 fn start<M>(mut metric: M)
