@@ -8,6 +8,7 @@ use bollard::container::ListContainersOptions;
 use bollard::Docker;
 use bollard::models::{ContainerState, ContainerStateStatusEnum, ContainerSummary, HealthStatusEnum};
 use tracing::{debug_span, error, instrument};
+use crate::config::get_config;
 
 type ContainerName = String;
 
@@ -89,8 +90,11 @@ impl Metric for ContainerHealthMetric {
 
     #[instrument(skip(self),fields(metric=Self::NAME))]
     async fn update(&mut self) {
-        let filters: HashMap<&str, Vec<&str>> = HashMap::with_capacity(0);
-        // TODO - Filter by label option
+        let mut filters: HashMap<&str, Vec<&str>> = HashMap::with_capacity(1);
+
+        if get_config().container_health_label_filter {
+            filters.insert("label", vec!["docker-prometheus-exporter.metric.container_health.enabled=true"]);
+        }
 
         let options = ListContainersOptions {
             all: true,

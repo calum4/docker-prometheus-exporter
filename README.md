@@ -2,8 +2,6 @@
 
 Exports basic metrics from Docker to the defined endpoint with path `/` or `/metrics` for scraping by Prometheus.
 
-**Disclaimer** - I'm still new to Rust, feel free to make an issue and tell me why what I'm doing is dumb.
-
 ## Available Metrics
 | Metric Name        | Description                                    | Units/Values                                                                                | Labels                                          |
 |--------------------|------------------------------------------------|---------------------------------------------------------------------------------------------|-------------------------------------------------|
@@ -12,11 +10,12 @@ Exports basic metrics from Docker to the defined endpoint with path `/` or `/met
 
 ## Environment Variables
 
-| Name          | Description                                                                                                                                       | Default                                                                 |
-|---------------|---------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
-| `RUST_LOG`    | Sets logging verbosity, see [documentation](https://docs.rs/tracing-subscriber/0.3.18/tracing_subscriber/filter/struct.EnvFilter.html#directives) | `info`                                                                  |
-| `LISTEN_ADDR` | Metrics endpoint listen address                                                                                                                   | `0.0.0.0`                                                               |
-| `LISTEN_PORT` | Metrics endpoint listen port                                                                                                                      | `9000`                                                                  |
+| Name                            | Description                                                                                                                                                | Default   |
+|---------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------|
+| `RUST_LOG`                      | Sets logging verbosity, see [documentation](https://docs.rs/tracing-subscriber/0.3.18/tracing_subscriber/filter/struct.EnvFilter.html#directives)          | `info`    |
+| `LISTEN_ADDR`                   | Metrics endpoint listen address                                                                                                                            | `0.0.0.0` |
+| `LISTEN_PORT`                   | Metrics endpoint listen port                                                                                                                               | `9000`    |
+| `CONTAINER_HEALTH_FILTER_LABEL` | Whether the `container_health` metric should only report containers which have the `docker-prometheus-exporter.metric.container_health.enabled=true` label | `true`    |
 
 ## Example Docker Compose
 ```yaml
@@ -32,5 +31,7 @@ services:
       - "9000:9000"
     ports:
       - "127.0.0.1:9000:9000"
+    labels:
+      "docker-prometheus-exporter.metric.container_health.enabled": true
     restart: unless-stopped
 ```
