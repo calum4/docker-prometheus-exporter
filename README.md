@@ -2,6 +2,13 @@
 
 Exports basic metrics from Docker to the defined endpoint with path `/` or `/metrics` for scraping by Prometheus.
 
+## V1 Breaking Changes 
+
+- [`254a698`](https://github.com/Calum4/docker-prometheus-exporter/commit/254a698bf7ff0f02545208ff512a98ee5ef3cce6) - Removes `DOCKER_HOST` environment variable. Now
+  connects via Unix Socket or Windows Pipe
+- [`f7652c7`](https://github.com/Calum4/docker-prometheus-exporter/commit/f7652c7123f5d29774938d2c5af700f85cc7d516) - Default behaviour for `container_health` metric now only reports the health status on containers with the following label `docker-prometheus-exporter.metric.container_health.enabled`. This behaviour can be configured with the `CONTAINER_HEALTH_FILTER_LABEL` environment variable
+- [`608a1eb`](https://github.com/Calum4/docker-prometheus-exporter/commit/608a1eb26b13a7667b28584d0a087ddc8f043d68) - Default listen address changed to `127.0.0.1`
+
 ## Available Metrics
 | Metric Name        | Description                                    | Units/Values                                                                                | Labels                                          |
 |--------------------|------------------------------------------------|---------------------------------------------------------------------------------------------|-------------------------------------------------|
