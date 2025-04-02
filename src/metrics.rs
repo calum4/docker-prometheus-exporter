@@ -1,7 +1,7 @@
-use std::sync::Arc;
-use std::time::Duration;
 use bollard::Docker;
 use prometheus_client::registry::Registry;
+use std::sync::Arc;
+use std::time::Duration;
 use tokio::time::interval;
 
 mod container_health;

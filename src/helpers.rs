@@ -1,6 +1,6 @@
+use prometheus_client::encoding::{EncodeLabelValue, LabelValueEncoder};
 use std::fmt::{Debug, Error, Formatter};
 use std::ops::Deref;
-use prometheus_client::encoding::{EncodeLabelValue, LabelValueEncoder};
 
 #[derive(Eq, Hash, PartialEq, Clone)]
 pub(crate) struct ContainerId(String);
