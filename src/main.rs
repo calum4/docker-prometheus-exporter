@@ -3,7 +3,7 @@ use axum::extract::OriginalUri;
 use axum::http::StatusCode;
 use axum::routing::get;
 use axum::{Router, serve, Extension};
-use axum_client_ip::{SecureClientIp, SecureClientIpSource};
+use axum_client_ip::ClientIp;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use bollard::Docker;
@@ -69,7 +69,7 @@ async fn start_http_server(metrics_registry: Arc<Registry>) {
         .route("/", get(serve_metrics))
         .route("/metrics", get(serve_metrics))
         .route("/ping", get(ping))
-        .layer(SecureClientIpSource::ConnectInfo.into_extension())
+        .layer(get_config().client_ip_source.clone().into_extension())
         .layer(AddExtensionLayer::new(metrics_registry));
 
     tokio::spawn(async move {
@@ -87,7 +87,7 @@ async fn start_http_server(metrics_registry: Arc<Registry>) {
 #[instrument(fields(path=path.path()), skip(metrics_registry))]
 #[axum::debug_handler]
 async fn serve_metrics(
-    SecureClientIp(ip): SecureClientIp,
+    ClientIp(ip): ClientIp,
     OriginalUri(path): OriginalUri,
     metrics_registry: Extension<Arc<Registry>>,
 ) -> Result<String, StatusCode> {
