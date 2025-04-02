@@ -10,6 +10,7 @@ tracing = "0.1.41"
 prometheus-client = "0.23.1"
 axum-client-ip = "0.7.0"
 bollard = "0.18.1"
+futures = "0.3.31"
 
 [dependencies.tokio]
 version = "1.44.1"

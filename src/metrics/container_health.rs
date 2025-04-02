@@ -12,6 +12,7 @@ use prometheus_client::metrics::gauge::Gauge;
 use prometheus_client::registry::Registry;
 use tracing::{debug_span, error, instrument};
 use crate::config::get_config;
+use futures::stream::{self, StreamExt};
 
 type ContainerName = String;
 
@@ -22,22 +23,8 @@ struct Labels {
 }
 
 pub(crate) struct ContainerHealthMetric {
-    metric: Family<Labels, Gauge>,
+    metric: Arc<Family<Labels, Gauge>>,
     docker: Arc<Docker>,
-}
-
-impl ContainerHealthMetric {
-    fn finish_update(&mut self, values: Vec<(ContainerId, ContainerName, HealthStatus)>) {
-        self.metric.clear();
-
-        for (id, name, value) in values {
-            let gauge = self
-                .metric
-                .get_or_create(&Labels { id, name });
-
-            gauge.set(value.into());
-        }
-    }
 }
 
 impl Metric for ContainerHealthMetric {
@@ -51,7 +38,7 @@ impl Metric for ContainerHealthMetric {
         registry.register(Self::NAME, Self::DESCRIPTION, metric.clone());
 
         Self {
-            metric,
+            metric: Arc::new(metric),
             docker,
         }
     }
@@ -70,56 +57,62 @@ impl Metric for ContainerHealthMetric {
             size: false,
             filters,
         };
+        
+        let summaries = {
+            let summaries = self.docker.list_containers(Some(options)).await;
 
-        let summaries = match self.docker.list_containers(Some(options)).await {
-            Ok(list) => list,
-            Err(error) => {
-                error!("{error}");
-                self.finish_update(vec![]);
-                return;
+            self.metric.clear();
+
+            match summaries {
+                Ok(list) => list,
+                Err(error) => {
+                    error!("{error}");
+                    return;
+                }
             }
         };
 
-        let mut values: Vec<(ContainerId, ContainerName, HealthStatus)> =
-            Vec::with_capacity(summaries.len());
+        stream::iter(summaries.into_iter())
+            .map(|container| (container, self.docker.clone(), self.metric.clone()))
+            .for_each_concurrent(Some(10), |(container, docker, metric)| async move {
+                let id = match &container.id {
+                    None => {
+                        error!("A container did not have an id!");
+                        return;
+                    }
+                    Some(id) => ContainerId::from(id.clone()),
+                };
 
-        for container in summaries {
-            let id = match &container.id {
-                None => {
-                    error!("A container did not have an id!");
-                    continue;
-                }
-                Some(id) => ContainerId::from(id.clone()),
-            };
+                let span = debug_span!("inspect", ?id);
+                let _ = span.enter();
 
-            let span = debug_span!("inspect", ?id);
-            let _ = span.enter();
+                let name = match get_container_name(&container) {
+                    None => {
+                        error!(?id, "Unable to fetch name from container!");
+                        return;
+                    }
+                    Some(name) => name,
+                };
 
-            let name = match get_container_name(&container) {
-                None => {
-                    error!(?id, "Unable to fetch name from container!");
-                    continue;
-                }
-                Some(name) => name,
-            };
+                let inspect = match docker.inspect_container(id.as_str(), None).await {
+                    Ok(inspect) => inspect,
+                    Err(error) => {
+                        error!(?id, "{error}");
+                        return;
+                    }
+                };
 
-            let inspect = match self.docker.inspect_container(id.as_str(), None).await {
-                Ok(inspect) => inspect,
-                Err(error) => {
-                    error!(?id, "{error}");
-                    continue;
-                }
-            };
+                let Some(state) = inspect.state else {
+                    error!(?id, "Container state was none!");
+                    return;
+                };
 
-            let Some(state) = inspect.state else {
-                error!(?id, "Container state was none!");
-                continue;
-            };
+                let gauge = metric
+                    .get_or_create(&Labels { id, name });
 
-            values.push((id, name, state.into()));
-        }
-
-        self.finish_update(values);
+                gauge.set(HealthStatus::from(state).into());
+            })
+            .await;
     }
 }
 
