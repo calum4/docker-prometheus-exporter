@@ -1,18 +1,20 @@
+use crate::config::get_config;
 use crate::helpers::ContainerId;
 use crate::metrics::Metric;
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::time::Duration;
-use bollard::container::ListContainersOptions;
 use bollard::Docker;
-use bollard::models::{ContainerState, ContainerStateStatusEnum, ContainerSummary, HealthStatusEnum};
+use bollard::container::ListContainersOptions;
+use bollard::models::{
+    ContainerState, ContainerStateStatusEnum, ContainerSummary, HealthStatusEnum,
+};
+use futures::stream::{self, StreamExt};
 use prometheus_client::encoding::EncodeLabelSet;
 use prometheus_client::metrics::family::Family;
 use prometheus_client::metrics::gauge::Gauge;
 use prometheus_client::registry::Registry;
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::time::Duration;
 use tracing::{debug_span, error, instrument};
-use crate::config::get_config;
-use futures::stream::{self, StreamExt};
 
 type ContainerName = String;
 
@@ -48,7 +50,10 @@ impl Metric for ContainerHealthMetric {
         let mut filters: HashMap<&str, Vec<&str>> = HashMap::with_capacity(1);
 
         if get_config().container_health_label_filter {
-            filters.insert("label", vec!["docker-prometheus-exporter.metric.container_health.enabled=true"]);
+            filters.insert(
+                "label",
+                vec!["docker-prometheus-exporter.metric.container_health.enabled=true"],
+            );
         }
 
         let options = ListContainersOptions {
@@ -57,7 +62,7 @@ impl Metric for ContainerHealthMetric {
             size: false,
             filters,
         };
-        
+
         let summaries = {
             let summaries = self.docker.list_containers(Some(options)).await;
 
@@ -107,8 +112,7 @@ impl Metric for ContainerHealthMetric {
                     return;
                 };
 
-                let gauge = metric
-                    .get_or_create(&Labels { id, name });
+                let gauge = metric.get_or_create(&Labels { id, name });
 
                 gauge.set(HealthStatus::from(state).into());
             })

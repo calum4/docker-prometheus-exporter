@@ -1,11 +1,11 @@
 use crate::metrics::Metric;
-use std::sync::Arc;
-use std::time::Duration;
 use bollard::Docker;
 use prometheus_client::encoding::EncodeLabelSet;
 use prometheus_client::metrics::family::Family;
 use prometheus_client::metrics::gauge::Gauge;
 use prometheus_client::registry::Registry;
+use std::sync::Arc;
+use std::time::Duration;
 use tracing::instrument;
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq, Default, EncodeLabelSet)]
@@ -26,10 +26,7 @@ impl Metric for UpMetric {
 
         registry.register(Self::NAME, Self::DESCRIPTION, metric.clone());
 
-        Self {
-            metric,
-            docker,
-        }
+        Self { metric, docker }
     }
 
     #[instrument(skip(self),fields(metric=Self::NAME))]
