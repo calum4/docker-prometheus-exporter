@@ -19,7 +19,7 @@ pub(crate) fn get_config() -> &'static Config {
         Config {
             listen_addr: env::var("LISTEN_ADDR")
                 .map(|addr| IpAddr::from_str(addr.as_str()).expect("Invalid LISTEN_ADDR provided"))
-                .unwrap_or(IpAddr::V4(Ipv4Addr::UNSPECIFIED)),
+                .unwrap_or(IpAddr::V4(Ipv4Addr::LOCALHOST)),
             listen_port: env::var("LISTEN_PORT")
                 .map(|port| u16::from_str(port.as_str()).expect("Invalid LISTEN_PORT provided"))
                 .unwrap_or(9000),

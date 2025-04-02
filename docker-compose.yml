@@ -6,6 +6,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - RUST_LOG=info,docker_prometheus_exporter=info
+      - LISTEN_ADDR=0.0.0.0
     expose:
       - "9000:9000"
     ports:
