@@ -30,7 +30,7 @@ Exports basic metrics from Docker to the defined endpoint with path `/` or `/met
 services:
   docker-prometheus-exporter:
     container_name: docker-prometheus-exporter
-    image: ghcr.io/calum4/docker-prometheus-exporter:latest
+    image: calum4/docker-prometheus-exporter:1
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
