@@ -6,7 +6,7 @@ use prometheus_client::metrics::gauge::Gauge;
 use prometheus_client::registry::Registry;
 use std::sync::Arc;
 use std::time::Duration;
-use tracing::instrument;
+use tracing::{error, instrument};
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq, Default, EncodeLabelSet)]
 struct Labels {}
@@ -33,7 +33,10 @@ impl Metric for UpMetric {
     async fn update(&mut self) {
         let up = match self.docker.ping().await {
             Ok(_) => 1,
-            Err(_) => 0,
+            Err(error) => {
+                error!("{error}");
+                0
+            }
         };
 
         self.metric.get_or_create(&Labels::default()).set(up);
