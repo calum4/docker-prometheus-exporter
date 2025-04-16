@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM rust:alpine AS chef
+FROM --platform=$BUILDPLATFORM rust:1-alpine3.21 AS chef
 
 WORKDIR /app/
 
@@ -40,7 +40,7 @@ RUN mkdir /target && \
     cd target/ && \
     cp --parents */release/docker-prometheus-exporter /target/
 
-FROM alpine:latest AS selector
+FROM alpine:3.21 AS selector
 
 ARG TARGETARCH
 
@@ -63,7 +63,7 @@ RUN case $TARGETARCH in \
     esac && \
     mv "/target/$target/release/docker-prometheus-exporter" /docker-prometheus-exporter
 
-FROM alpine:latest AS docker-prometheus-exporter
+FROM alpine:3.21 AS docker-prometheus-exporter
 
 WORKDIR /app
 

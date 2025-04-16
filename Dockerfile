@@ -1,4 +1,4 @@
-FROM rust:alpine AS builder
+FROM rust:1-alpine3.21  AS builder
 ARG BUILD_ENVIRONMENT
 WORKDIR /app/
 
@@ -9,7 +9,7 @@ COPY src/ src/
 
 RUN echo "$BUILD_ENVIRONMENT" > .env && cargo install --path .
 
-FROM alpine:latest AS docker-prometheus-exporter
+FROM alpine:3.21 AS docker-prometheus-exporter
 
 WORKDIR /app
 
