@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Returned support for the `DOCKER_HOST` environment variable
+- Bundled compose file now utilises [docker-socket-proxy](https://github.com/linuxserver/docker-socket-proxy)
+  for enhanced security
 
 ## [1.0.0] - 2025-04-03
 
