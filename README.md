@@ -22,6 +22,7 @@
 
 <p align="center">
   <a href="#changelog">Changelog</a> •
+  <a href="#security">Security</a> •
   <a href="#usage">Usage</a> •
   <a href="#metrics">Metrics</a> •
   <a href="#environment-variables">Configuration</a> •
