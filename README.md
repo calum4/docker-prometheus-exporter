@@ -27,18 +27,59 @@ Exports basic metrics from Docker to the defined endpoint with path `/` or `/met
 | `CONTAINER_HEALTH_FILTER_LABEL` | Whether the `container_health` metric should only report containers which have the `docker-prometheus-exporter.metric.container_health.enabled=true` label | `true`                                                                              |
 
 ## Example Docker Compose
+
+### Proxy Docker Socket (Recommended)
+```yaml
+services:
+  socket-proxy:
+    image: lscr.io/linuxserver/socket-proxy:3.0.9
+    container_name: socket-proxy
+    environment:
+      - CONTAINERS=1
+      - PING=1
+      - VERSION=1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    expose:
+      - "2357:2357/tcp"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /run
+    labels:
+      "docker-prometheus-exporter.metric.container_health.enabled": true
+
+  docker-prometheus-exporter:
+    container_name: docker-prometheus-exporter
+    build: .
+    environment:
+      - RUST_LOG=info,docker_prometheus_exporter=info
+      - LISTEN_ADDR=0.0.0.0
+      - DOCKER_HOST=tcp://socket-proxy:2375
+    ports:
+      - "127.0.0.1:9000:9000"
+    labels:
+      "docker-prometheus-exporter.metric.container_health.enabled": true
+    depends_on:
+      - socket-proxy
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges=true
+    user: "1000:1000"
+```
+
+### Mount Docker Socket
 ```yaml
 services:
   docker-prometheus-exporter:
     container_name: docker-prometheus-exporter
     image: calum4/docker-prometheus-exporter:1
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - RUST_LOG=info,docker_prometheus_exporter=info
       - LISTEN_ADDR=0.0.0.0
-    expose:
-      - "9000:9000"
     ports:
       - "127.0.0.1:9000:9000"
     labels:
