@@ -17,13 +17,14 @@ Exports basic metrics from Docker to the defined endpoint with path `/` or `/met
 
 ## Environment Variables
 
-| Name                            | Description                                                                                                                                                | Default       |
-|---------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------|
-| `RUST_LOG`                      | Sets logging verbosity, see [documentation](https://docs.rs/tracing-subscriber/0.3.18/tracing_subscriber/filter/struct.EnvFilter.html#directives)          | `info`        |
-| `LISTEN_ADDR`                   | Metrics endpoint listen address                                                                                                                            | `127.0.0.1`   |
-| `LISTEN_PORT`                   | Metrics endpoint listen port                                                                                                                               | `9000`        |
-| `CLIENT_IP_SOURCE`              | Sets the Client IP source for logging, see [documentation](https://github.com/imbolc/axum-client-ip/blob/v1.0.0/src/lib.rs) for valid values               | `ConnectInfo` |
-| `CONTAINER_HEALTH_FILTER_LABEL` | Whether the `container_health` metric should only report containers which have the `docker-prometheus-exporter.metric.container_health.enabled=true` label | `true`        |
+| Name                            | Description                                                                                                                                                | Default                                                                             |
+|---------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|
+| `RUST_LOG`                      | Sets logging verbosity, see [documentation](https://docs.rs/tracing-subscriber/0.3.18/tracing_subscriber/filter/struct.EnvFilter.html#directives)          | `info`                                                                              |
+| `DOCKER_HOST`                   | URI for the Docker Daemon                                                                                                                                  | Unix - `unix:///var/run/docker.sock`<br/>Windows - `npipe:////./pipe/docker_engine` |
+| `LISTEN_ADDR`                   | Metrics endpoint listen address                                                                                                                            | `127.0.0.1`                                                                         |
+| `LISTEN_PORT`                   | Metrics endpoint listen port                                                                                                                               | `9000`                                                                              |
+| `CLIENT_IP_SOURCE`              | Sets the Client IP source for logging, see [documentation](https://github.com/imbolc/axum-client-ip/blob/v1.0.0/src/lib.rs) for valid values               | `ConnectInfo`                                                                       |
+| `CONTAINER_HEALTH_FILTER_LABEL` | Whether the `container_health` metric should only report containers which have the `docker-prometheus-exporter.metric.container_health.enabled=true` label | `true`                                                                              |
 
 ## Example Docker Compose
 ```yaml
