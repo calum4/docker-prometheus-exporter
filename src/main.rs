@@ -46,7 +46,7 @@ fn start_tracing() {
 async fn main() {
     start_tracing();
 
-    let docker = Docker::connect_with_local_defaults().expect("unable to connect to docker");
+    let docker = Docker::connect_with_defaults().expect("unable to connect to docker");
 
     let mut metrics_registry = Registry::default();
     metrics::initialise(&mut metrics_registry, Arc::new(docker));
