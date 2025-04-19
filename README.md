@@ -408,9 +408,10 @@ other GET endpoints such as:
 
 ### Container Labels
 
-| Label                                                             | Description                                                                                                                                                        |
-|-------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `docker-prometheus-exporter.metric.container_health.enabled=true` | When used in conjunction with the `CONTAINER_HEALTH_FILTER_LABEL=true` environment variable, enables the `container_health` metric for the corresponding container |
+| Label                                                              | Description                                                                                                                                                        |
+|--------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `docker-prometheus-exporter.metric.container_health.enabled=true`  | When used in conjunction with the `CONTAINER_HEALTH_FILTER_LABEL=true` environment variable, enables the `container_health` metric for the corresponding container |
+| `docker-prometheus-exporter.metric.container_health.enabled=false` | Disables the `container_health` metric for the corresponding container, regardless of the `CONTAINER_HEALTH_FILTER_LABEL` environment variable                     |
 
 
 ## License

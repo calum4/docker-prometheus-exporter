@@ -12,6 +12,7 @@ use prometheus_client::metrics::family::Family;
 use prometheus_client::metrics::gauge::Gauge;
 use prometheus_client::registry::Registry;
 use std::collections::HashMap;
+use std::future;
 use std::sync::Arc;
 use std::time::Duration;
 use tracing::{debug_span, error, instrument};
@@ -78,6 +79,15 @@ impl Metric for ContainerHealthMetric {
         };
 
         stream::iter(summaries.into_iter())
+            .filter(|summary| {
+                let is_blacklisted = summary.labels.as_ref().is_none_or(|labels| {
+                    labels
+                        .get("docker-prometheus-exporter.metric.container_health.enabled")
+                        .is_some_and(|value| value.eq_ignore_ascii_case("false"))
+                });
+                
+                future::ready(!is_blacklisted)
+            })
             .map(|container| (container, self.docker.clone(), self.metric.clone()))
             .for_each_concurrent(Some(10), |(container, docker, metric)| async move {
                 let id = match &container.id {
