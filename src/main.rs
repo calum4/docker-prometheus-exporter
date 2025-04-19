@@ -48,6 +48,11 @@ async fn main() {
 
     let docker = Docker::connect_with_defaults().expect("unable to connect to docker");
 
+    let docker = docker
+        .negotiate_version()
+        .await
+        .expect("unable to negotiate api version with the docker daemon");
+
     let mut metrics_registry = Registry::default();
     metrics::initialise(&mut metrics_registry, Arc::new(docker));
 
