@@ -85,7 +85,7 @@ impl Metric for ContainerHealthMetric {
                         .get("docker-prometheus-exporter.metric.container_health.enabled")
                         .is_some_and(|value| value.eq_ignore_ascii_case("false"))
                 });
-                
+
                 future::ready(!is_blacklisted)
             })
             .map(|container| (container, self.docker.clone(), self.metric.clone()))
