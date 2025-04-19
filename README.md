@@ -34,7 +34,7 @@
 
 The full changelog can be found at [CHANGELOG.md](CHANGELOG.md)
 
-### [1.1.0] - 2025-04-15
+### [1.1.0] - 2025-04-19
 
 ### Added
 - Returned support for the `DOCKER_HOST` environment variable
