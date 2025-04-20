@@ -58,10 +58,9 @@ services:
   docker-socket-proxy:
     image: ghcr.io/calum4/docker-socket-proxy:latest
     container_name: docker-socket-proxy
-    user: "0:0" # can instead be run as an unprivileged user with the docker group
     environment:
       - PING=1
-      - VERSION=0
+      - VERSION=1
       - EVENTS=0 # enabled by default
       - CONTAINER_LIST=1
       - CONTAINER_INSPECT=1
@@ -181,7 +180,6 @@ modified to enable fine-grained endpoint restriction for docker-prometheus-expor
     docker-socket-proxy:
       image: ghcr.io/calum4/docker-socket-proxy:latest
       container_name: docker-socket-proxy
-      user: "0:0" # can instead be run as an unprivileged user with the docker group
       environment:
         - PING=1
         - VERSION=1
@@ -323,7 +321,6 @@ other GET endpoints such as:
     docker-socket-proxy:
       image: lscr.io/linuxserver/socket-proxy:latest
       container_name: docker-socket-proxy
-      user: "0:0" # can instead be run as an unprivileged user with the docker group
       environment:
         - PING=1
         - VERSION=1
