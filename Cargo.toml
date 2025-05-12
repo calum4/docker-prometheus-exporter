@@ -19,7 +19,7 @@ bollard = "0.18.1"
 futures = "0.3.31"
 
 [dependencies.tokio]
-version = "1.44.2"
+version = "1.45.0"
 features = ["rt", "macros", "rt-multi-thread", "signal"]
 
 [dependencies.tracing-subscriber]
