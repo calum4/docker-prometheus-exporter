@@ -15,7 +15,7 @@ publish = true
 tracing = "0.1.41"
 prometheus-client = "0.23.1"
 axum-client-ip = "1.1.3"
-bollard = "0.18.1"
+bollard = "0.19.1"
 futures = "0.3.31"
 
 [dependencies.tokio]

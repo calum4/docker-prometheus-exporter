@@ -2,10 +2,10 @@ use crate::config::get_config;
 use crate::helpers::ContainerId;
 use crate::metrics::Metric;
 use bollard::Docker;
-use bollard::container::ListContainersOptions;
 use bollard::models::{
     ContainerState, ContainerStateStatusEnum, ContainerSummary, HealthStatusEnum,
 };
+use bollard::query_parameters::{InspectContainerOptionsBuilder, ListContainersOptionsBuilder};
 use futures::stream::{self, StreamExt};
 use prometheus_client::encoding::EncodeLabelSet;
 use prometheus_client::metrics::family::Family;
@@ -57,12 +57,12 @@ impl Metric for ContainerHealthMetric {
             );
         }
 
-        let options = ListContainersOptions {
-            all: true,
-            limit: None,
-            size: false,
-            filters,
-        };
+        let options = ListContainersOptionsBuilder::new()
+            .all(true)
+            .limit(i32::MAX)
+            .size(false)
+            .filters(&filters)
+            .build();
 
         let summaries = {
             let summaries = self.docker.list_containers(Some(options)).await;
@@ -109,7 +109,9 @@ impl Metric for ContainerHealthMetric {
                     Some(name) => name,
                 };
 
-                let inspect = match docker.inspect_container(id.as_str(), None).await {
+                let options = InspectContainerOptionsBuilder::new().size(false).build();
+
+                let inspect = match docker.inspect_container(id.as_str(), Some(options)).await {
                     Ok(inspect) => inspect,
                     Err(error) => {
                         error!(?id, "{error}");
