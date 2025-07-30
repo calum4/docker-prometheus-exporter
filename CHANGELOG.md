@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2025-07-30
+
+### Changed
+- Updated Alpine to v3.22
+- Updated axum-client-ip to v1.1.3
+- Updated bollard to v0.19.1
+- Updated axum to v0.8.4
+- Updated tower-http to v0.6.6
+- Updated axum-client-ip to v1.1.3
+- Updated tokio to v1.47.0
+- Bumped misc dependencies (cargo update)
+
 ## [1.1.1] - 2025-04-20
 
 ### Fixed

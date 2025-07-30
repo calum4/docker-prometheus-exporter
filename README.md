@@ -34,20 +34,17 @@
 
 The full changelog can be found at [CHANGELOG.md](CHANGELOG.md)
 
-## [1.1.1] - 2025-04-20
+## [1.1.2] - 2025-07-30
 
-### Fixed
-- Misc documentation fixes
-
-### [1.1.0] - 2025-04-19
-
-### Added
-- Returned support for the `DOCKER_HOST` environment variable
-- Bundled compose file now utilises [docker-socket-proxy](https://github.com/linuxserver/docker-socket-proxy)
-  for enhanced security
-- Automatically negotiate API version with the connected docker daemon
-- Blacklist container health reporting for a container by applying the `docker-prometheus-exporter.metric.container_health.enabled=false`
-  label
+### Changed
+- Updated Alpine to v3.22
+- Updated axum-client-ip to v1.1.3
+- Updated bollard to v0.19.1
+- Updated axum to v0.8.4
+- Updated tower-http to v0.6.6
+- Updated axum-client-ip to v1.1.3
+- Updated tokio to v1.47.0
+- Bumped misc dependencies (cargo update)
 
 ## Usage
 
