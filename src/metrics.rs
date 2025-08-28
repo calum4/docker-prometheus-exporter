@@ -7,7 +7,7 @@ use tokio::time::interval;
 mod container_health;
 mod up;
 
-macro_rules! metrics {
+macro_rules! register_metrics {
     ($($metric:ty),+ $(,)?) => {
         pub(crate) fn initialise(registry: &mut Registry, docker: Arc<Docker>) {
             $(
@@ -17,7 +17,7 @@ macro_rules! metrics {
     };
 }
 
-metrics! {
+register_metrics! {
     up::UpMetric,
     container_health::ContainerHealthMetric,
 }
