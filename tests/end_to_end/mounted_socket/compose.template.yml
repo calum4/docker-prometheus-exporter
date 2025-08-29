@@ -1,0 +1,15 @@
+services:
+  docker-prometheus-exporter:
+    build: ../../..
+    user: "0:0" # can instead be run as an unprivileged user with the docker group
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - RUST_LOG=info,docker_prometheus_exporter=info
+      - LISTEN_ADDR=0.0.0.0
+    ports:
+      - "127.0.0.1:${DPE_MOUNTED_SOCKET_PORT}:9000"
+    labels:
+      "docker-prometheus-exporter.metric.container_health.enabled": true
+    restart: unless-stopped
+    read_only: true

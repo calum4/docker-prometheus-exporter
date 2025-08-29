@@ -39,3 +39,8 @@ features = ["macros"]
 [dependencies.clap]
 version = "4.5.46"
 features = ["derive", "env", "string"]
+
+[dev-dependencies]
+reqwest = "0.12.23"
+rand = "0.9.2"
+regex = "1.11.2"
