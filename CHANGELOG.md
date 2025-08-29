@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- BREAKING CHANGE: recoverable panics now instead exit with an error message 
+
 ## [1.1.3] - 2025-08-29
 
 ### Changed
