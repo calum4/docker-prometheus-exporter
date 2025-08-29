@@ -6,8 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.3] - 2025-08-29
+
 ### Changed
 - Updated misc dependencies
+
+### Security
+- Updated `slab` to patch [RUSTSEC-2025-0047 / GHSA-qx2v-8332-m4fv](https://github.com/tokio-rs/slab/security/advisories/GHSA-qx2v-8332-m4fv)
 
 ## [1.1.2] - 2025-07-30
 
