@@ -6,6 +6,7 @@ use bollard::models::{
     ContainerState, ContainerStateStatusEnum, ContainerSummary, HealthStatusEnum,
 };
 use bollard::query_parameters::{InspectContainerOptionsBuilder, ListContainersOptionsBuilder};
+use clap::{ArgAction, Args};
 use futures::stream::{self, StreamExt};
 use prometheus_client::encoding::EncodeLabelSet;
 use prometheus_client::metrics::family::Family;
@@ -16,6 +17,13 @@ use std::future;
 use std::sync::Arc;
 use std::time::Duration;
 use tracing::{debug_span, error, instrument};
+
+#[derive(Args, Debug, Clone, Copy)]
+pub(crate) struct ContainerHealthConfig {
+    /// Disable the filter for the "docker-prometheus-exporter.metric.container_health.enabled=true" label
+    #[arg(long = "container_health.filter_label", action=ArgAction::Set, default_value_t = true)]
+    pub(crate) filter_label: bool,
+}
 
 type ContainerName = String;
 
@@ -52,7 +60,7 @@ impl Metric for ContainerHealthMetric {
     async fn update(&mut self) {
         let mut filters: HashMap<&str, Vec<&str>> = HashMap::with_capacity(1);
 
-        if self.config.container_health_label_filter {
+        if self.config.metrics.container_health.filter_label {
             filters.insert(
                 "label",
                 vec!["docker-prometheus-exporter.metric.container_health.enabled=true"],

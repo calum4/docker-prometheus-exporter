@@ -5,8 +5,8 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::interval;
 
-mod container_health;
-mod up;
+pub(crate) mod container_health;
+pub(crate) mod up;
 
 macro_rules! register_metrics {
     ($($metric:ty),+ $(,)?) => {
