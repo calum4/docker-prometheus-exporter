@@ -1,0 +1,33 @@
+services:
+  stopped:
+    image: alpine:3
+    labels:
+      "docker-prometheus-exporter.metric.container_health.enabled": true
+
+  no_health_check:
+    image: alpine:3
+    command: sleep infinity
+    labels:
+      "docker-prometheus-exporter.metric.container_health.enabled": true
+
+  unhealthy:
+    image: alpine:3
+    command: sleep infinity
+    labels:
+      "docker-prometheus-exporter.metric.container_health.enabled": true
+    healthcheck:
+      test: exit 1
+      interval: 60s
+      start_interval: 1s
+      start_period: 5s
+
+  healthy:
+    image: alpine:3
+    command: sleep infinity
+    labels:
+      "docker-prometheus-exporter.metric.container_health.enabled": true
+    healthcheck:
+      test: exit 0
+      interval: 60s
+      start_interval: 1s
+      start_period: 5s
