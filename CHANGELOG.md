@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Support for cli args, try `--help`
+
 ### Changed
 - BREAKING CHANGE: recoverable panics now instead exit with an error message 
 

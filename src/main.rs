@@ -1,4 +1,4 @@
-use crate::config::{Config, ConfigError, config};
+use crate::config::{Config, config};
 use axum::extract::OriginalUri;
 use axum::http::StatusCode;
 use axum::routing::get;
@@ -45,8 +45,6 @@ fn start_tracing() {
 
 #[derive(thiserror::Error, Debug)]
 enum Error {
-    #[error(transparent)]
-    Config(#[from] &'static ConfigError),
     #[error("unable to connect to docker: {0}")]
     BollardConnect(bollard::errors::Error),
     #[error(transparent)]
@@ -57,7 +55,10 @@ enum Error {
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    let config = config()?;
+    let config = match config() {
+        Ok(config) => config,
+        Err(error) => error.exit(),
+    };
 
     start_tracing();
 
