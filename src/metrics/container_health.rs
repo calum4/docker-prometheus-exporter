@@ -1,4 +1,4 @@
-use crate::config::get_config;
+use crate::config::Config;
 use crate::helpers::ContainerId;
 use crate::metrics::Metric;
 use bollard::Docker;
@@ -28,6 +28,7 @@ struct Labels {
 pub(crate) struct ContainerHealthMetric {
     metric: Arc<Family<Labels, Gauge>>,
     docker: Arc<Docker>,
+    config: &'static Config,
 }
 
 impl Metric for ContainerHealthMetric {
@@ -35,7 +36,7 @@ impl Metric for ContainerHealthMetric {
     const DESCRIPTION: &'static str = "Reports the health state of a Docker container";
     const INTERVAL: Duration = Duration::from_secs(15);
 
-    fn new(registry: &mut Registry, docker: Arc<Docker>) -> Self {
+    fn new(registry: &mut Registry, docker: Arc<Docker>, config: &'static Config) -> Self {
         let metric = Family::<Labels, Gauge>::default();
 
         registry.register(Self::NAME, Self::DESCRIPTION, metric.clone());
@@ -43,6 +44,7 @@ impl Metric for ContainerHealthMetric {
         Self {
             metric: Arc::new(metric),
             docker,
+            config,
         }
     }
 
@@ -50,7 +52,7 @@ impl Metric for ContainerHealthMetric {
     async fn update(&mut self) {
         let mut filters: HashMap<&str, Vec<&str>> = HashMap::with_capacity(1);
 
-        if get_config().container_health_label_filter {
+        if self.config.container_health_label_filter {
             filters.insert(
                 "label",
                 vec!["docker-prometheus-exporter.metric.container_health.enabled=true"],

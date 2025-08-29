@@ -1,3 +1,4 @@
+use crate::config::Config;
 use bollard::Docker;
 use prometheus_client::registry::Registry;
 use std::sync::Arc;
@@ -9,9 +10,9 @@ mod up;
 
 macro_rules! register_metrics {
     ($($metric:ty),+ $(,)?) => {
-        pub(crate) fn initialise(registry: &mut Registry, docker: Arc<Docker>) {
+        pub(crate) fn initialise(registry: &mut Registry, docker: Arc<Docker>, config: &'static Config) {
             $(
-                start(<$metric>::new(registry, docker.clone()));
+                start(<$metric>::new(registry, docker.clone(), config));
             )*
         }
     };
@@ -30,7 +31,7 @@ where
     const DESCRIPTION: &'static str;
     const INTERVAL: Duration;
 
-    fn new(registry: &mut Registry, docker: Arc<Docker>) -> Self;
+    fn new(registry: &mut Registry, docker: Arc<Docker>, config: &'static Config) -> Self;
     fn update(&mut self) -> impl Future<Output = ()> + Send;
 }
 
