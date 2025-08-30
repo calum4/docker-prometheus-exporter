@@ -3,9 +3,9 @@
 docker_up{} 1
 # HELP container_health Reports the health state of a Docker container.
 # TYPE container_health gauge
-container_health{id="fd85dd9613b7b9ad537b5e5c7697761201fd4bac6f3e0595a3b630fda9aec0d0",name="/mounted_socket-docker-prometheus-exporter-1"} 4
-container_health{id="b45e624803e848314164e3c4612d68769f91d2d5357a82a4882e27d6ac0e7381",name="/mounted_socket-unhealthy-1"} 3
-container_health{id="012e2fd2391cd9adfde36a7f91ac77ef0753fd282b09f8ef2a8832533d4d587a",name="/mounted_socket-no_health_check-1"} 2
-container_health{id="e7aa8d873ddf4bb520c962c3ae8feadc54568e2f9915a7d5cba40b30314a90c4",name="/mounted_socket-healthy-1"} 4
-container_health{id="37ebddf22f6f064bbe982368f8f0ac090da590c2f9ef75b4cef0151471f3fcce",name="/mounted_socket-stopped-1"} 1
+container_health{id="fd85dd9613b7b9ad537b5e5c7697761201fd4bac6f3e0595a3b630fda9aec0d0",name="/hJ9ev7F5QP_dpe_test-docker-prometheus-exporter-1"} 4
+container_health{id="b45e624803e848314164e3c4612d68769f91d2d5357a82a4882e27d6ac0e7381",name="/hJ9ev7F5QP_dpe_test-unhealthy-1"} 3
+container_health{id="012e2fd2391cd9adfde36a7f91ac77ef0753fd282b09f8ef2a8832533d4d587a",name="/hJ9ev7F5QP_dpe_test-no_health_check-1"} 2
+container_health{id="e7aa8d873ddf4bb520c962c3ae8feadc54568e2f9915a7d5cba40b30314a90c4",name="/hJ9ev7F5QP_dpe_test-healthy-1"} 4
+container_health{id="37ebddf22f6f064bbe982368f8f0ac090da590c2f9ef75b4cef0151471f3fcce",name="/hJ9ev7F5QP_dpe_test-stopped-1"} 1
 # EOF

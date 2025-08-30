@@ -1,6 +1,5 @@
 use crate::common::Containers;
 use regex::Regex;
-use std::ffi::OsStr;
 use std::fs::File;
 use std::fs::remove_file;
 use std::io::Write;
@@ -74,7 +73,7 @@ impl Drop for HealthCheck {
     }
 }
 
-pub fn assert_healthcheck_metric(metrics: &str, project_name: &OsStr, dpe_running_on_docker: bool) {
+pub fn assert_healthcheck_metric(metrics: &str, project_name: &str, dpe_running_on_docker: bool) {
     let regex = Regex::new(CONTAINER_HEALTH_REGEX).expect("regex is tested");
 
     let mut total_captured_containers: u8 = 0;
@@ -104,7 +103,7 @@ pub fn assert_healthcheck_metric(metrics: &str, project_name: &OsStr, dpe_runnin
     assert_eq!(total_captured_containers, total_containers);
 }
 
-pub const CONTAINER_HEALTH_REGEX: &str = r##"container_health\{id="(?<id>\w+)",name="/?(?<project_name>[\w_]+)-(?<name>[\w_-]+)-\d"}\s(?<health>[1-4])"##;
+pub const CONTAINER_HEALTH_REGEX: &str = r##"container_health\{id="(?<id>\w+)",name="/?(?<project_name>\w+_dpe_test)-(?<name>[\w_-]+)-\d"}\s(?<health>[1-4])"##;
 
 #[test]
 fn container_health_regex() {
@@ -120,7 +119,7 @@ fn container_health_regex() {
     );
     assert_eq!(
         stopped.name("project_name").map(|s| s.as_str()),
-        Some("mounted_socket")
+        Some("hJ9ev7F5QP_dpe_test")
     );
     assert_eq!(
         stopped.name("name").map(|s| s.as_str()),
@@ -135,7 +134,7 @@ fn container_health_regex() {
     );
     assert_eq!(
         stopped.name("project_name").map(|s| s.as_str()),
-        Some("mounted_socket")
+        Some("hJ9ev7F5QP_dpe_test")
     );
     assert_eq!(stopped.name("name").map(|s| s.as_str()), Some("unhealthy"));
     assert_eq!(stopped.name("health").map(|s| s.as_str()), Some("3"));
@@ -147,7 +146,7 @@ fn container_health_regex() {
     );
     assert_eq!(
         stopped.name("project_name").map(|s| s.as_str()),
-        Some("mounted_socket")
+        Some("hJ9ev7F5QP_dpe_test")
     );
     assert_eq!(
         stopped.name("name").map(|s| s.as_str()),
@@ -162,7 +161,7 @@ fn container_health_regex() {
     );
     assert_eq!(
         stopped.name("project_name").map(|s| s.as_str()),
-        Some("mounted_socket")
+        Some("hJ9ev7F5QP_dpe_test")
     );
     assert_eq!(stopped.name("name").map(|s| s.as_str()), Some("healthy"));
     assert_eq!(stopped.name("health").map(|s| s.as_str()), Some("4"));
@@ -174,7 +173,7 @@ fn container_health_regex() {
     );
     assert_eq!(
         stopped.name("project_name").map(|s| s.as_str()),
-        Some("mounted_socket")
+        Some("hJ9ev7F5QP_dpe_test")
     );
     assert_eq!(stopped.name("name").map(|s| s.as_str()), Some("stopped"));
     assert_eq!(stopped.name("health").map(|s| s.as_str()), Some("1"));

@@ -1,11 +1,11 @@
 pub mod containers;
 pub mod healthcheck;
+pub mod test_environment;
 
 use crate::common::containers::Containers;
 use rand::{Rng, rng};
 use regex::Regex;
 use reqwest::{Client, Request, Url};
-use std::ffi::OsStr;
 use std::net::{Ipv4Addr, SocketAddr, TcpListener};
 use std::process::Command;
 use std::str::FromStr;
@@ -42,7 +42,7 @@ impl GetMetricsMode {
     }
 }
 
-pub async fn get_metrics(port: u16, project_name: &OsStr, mut mode: GetMetricsMode) -> String {
+pub async fn get_metrics(port: u16, project_name: &str, mut mode: GetMetricsMode) -> String {
     let regex = Regex::new(healthcheck::CONTAINER_HEALTH_REGEX).expect("tested");
     let (client, req) = setup_metrics_req(port);
 
@@ -52,11 +52,7 @@ pub async fn get_metrics(port: u16, project_name: &OsStr, mut mode: GetMetricsMo
         wakeup_interval.tick().await;
 
         if let GetMetricsMode::Docker { ref mut is_healthy } = mode {
-            let container_name = {
-                let mut container_name = project_name.to_os_string();
-                container_name.push("-docker-prometheus-exporter-1");
-                container_name
-            };
+            let container_name = format!("/{project_name}-docker-prometheus-exporter-1");
 
             let output = Command::new("docker")
                 .arg("inspect")

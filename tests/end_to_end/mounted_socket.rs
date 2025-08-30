@@ -1,6 +1,8 @@
 use crate::common;
 use crate::common::GetMetricsMode;
 use crate::common::healthcheck::{HealthCheck, assert_healthcheck_metric};
+use crate::common::test_environment::TestEnvironment;
+use std::env::current_dir;
 use std::fs::{File, remove_file};
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -12,15 +14,19 @@ struct Dpe {
 
 impl Dpe {
     fn new(dir_path: &Path) -> Self {
-        let compose_file_path = dir_path.join("compose.yml");
+        let compose_file_path = dir_path.join("compose.dpe.yml");
 
         Self { compose_file_path }
     }
 
     fn start(&self, port: u16) {
         let compose_template = include_str!("mounted_socket/compose.template.yml");
-        let compose_contents =
-            compose_template.replace("${DPE_MOUNTED_SOCKET_PORT}", port.to_string().as_str());
+        let compose_contents = compose_template
+            .replace("${DPE_MOUNTED_SOCKET_PORT}", port.to_string().as_str())
+            .replace(
+                "${DPE_DOCKERFILE_PATH}",
+                current_dir().unwrap().to_str().unwrap(),
+            );
 
         let mut compose_file = File::create(&self.compose_file_path).unwrap();
         compose_file.write_all(compose_contents.as_bytes()).unwrap();
@@ -78,17 +84,18 @@ impl Drop for Dpe {
 #[ignore]
 #[tokio::test]
 async fn mounted_socket() {
-    let dir_path = PathBuf::from("./tests/end_to_end/mounted_socket/");
-    let project_name = dir_path.file_name().unwrap();
-
     let port = common::available_port();
 
-    let health_check = HealthCheck::new(&dir_path);
+    let test_env = TestEnvironment::default();
+    test_env.setup();
+
+    let health_check = HealthCheck::new(test_env.temp_dir.as_path());
     health_check.start();
 
-    let dpe = Dpe::new(&dir_path);
+    let dpe = Dpe::new(test_env.temp_dir.as_path());
     dpe.start(port);
 
-    let metrics = common::get_metrics(port, project_name, GetMetricsMode::new_docker()).await;
-    assert_healthcheck_metric(metrics.as_str(), project_name, true);
+    let metrics =
+        common::get_metrics(port, test_env.id.as_str(), GetMetricsMode::new_docker()).await;
+    assert_healthcheck_metric(metrics.as_str(), test_env.id.as_str(), true);
 }

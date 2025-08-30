@@ -1,6 +1,6 @@
 services:
   docker-prometheus-exporter:
-    build: ../../..
+    build: ${DPE_DOCKERFILE_PATH}
     user: "0:0" # can instead be run as an unprivileged user with the docker group
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
