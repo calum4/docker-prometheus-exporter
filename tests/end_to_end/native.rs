@@ -1,7 +1,7 @@
 use crate::common;
 use crate::common::GetMetricsMode;
 use crate::common::healthcheck::{HealthCheck, assert_healthcheck_metric};
-use std::path::PathBuf;
+use crate::common::test_environment::TestEnvironment;
 use std::process::{Child, Command, Stdio};
 
 struct Dpe {
@@ -33,15 +33,15 @@ impl Drop for Dpe {
     }
 }
 
-//#[ignore] TODO - Re-enable
+#[ignore]
 #[tokio::test]
 async fn native() {
-    let dir_path = PathBuf::from("./tests/end_to_end/native/");
-    let project_name = dir_path.file_name().unwrap();
-
     let port = common::available_port();
 
-    let health_check = HealthCheck::new(&dir_path);
+    let test_env = TestEnvironment::default();
+    test_env.setup();
+
+    let health_check = HealthCheck::new(test_env.temp_dir.as_path());
     health_check.start();
 
     let docker_version = Command::new("docker").arg("-v").output().unwrap();
@@ -52,9 +52,9 @@ async fn native() {
 
     let _dpe = Dpe::start(port);
 
-    let metrics = common::get_metrics(port, project_name, GetMetricsMode::Native).await;
+    let metrics = common::get_metrics(port, test_env.id.as_str(), GetMetricsMode::Native).await;
 
-    assert_healthcheck_metric(metrics.as_str(), project_name, false);
+    assert_healthcheck_metric(metrics.as_str(), test_env.id.as_str(), false);
 
     for line in metrics.lines() {
         if line.starts_with("docker_up{} 1") {
