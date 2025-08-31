@@ -3,9 +3,9 @@
 docker_up{} 1
 # HELP container_health Reports the health state of a Docker container.
 # TYPE container_health gauge
-container_health{id="fd85dd9613b7b9ad537b5e5c7697761201fd4bac6f3e0595a3b630fda9aec0d0",name="/hJ9ev7F5QP_dpe_test-docker-prometheus-exporter-1"} 4
-container_health{id="b45e624803e848314164e3c4612d68769f91d2d5357a82a4882e27d6ac0e7381",name="/hJ9ev7F5QP_dpe_test-unhealthy-1"} 3
-container_health{id="012e2fd2391cd9adfde36a7f91ac77ef0753fd282b09f8ef2a8832533d4d587a",name="/hJ9ev7F5QP_dpe_test-no_health_check-1"} 2
-container_health{id="e7aa8d873ddf4bb520c962c3ae8feadc54568e2f9915a7d5cba40b30314a90c4",name="/hJ9ev7F5QP_dpe_test-healthy-1"} 4
-container_health{id="37ebddf22f6f064bbe982368f8f0ac090da590c2f9ef75b4cef0151471f3fcce",name="/hJ9ev7F5QP_dpe_test-stopped-1"} 1
+container_health{id="0a98b9ee471bcdac5cd83b9ec728ae680aa42c71bf550d3a96541ae3b2c25d8c",name="/hvtss5ns87_dpe_test-docker-prometheus-exporter-1"} 4
+container_health{id="a270a323cd54407835904c89848ca708b42fa6069625c2834a73a84270479496",name="/hvtss5ns87_dpe_test_healthcheck-unhealthy-1"} 3
+container_health{id="0ed45f8703a36fb4c805a63f3b25a4fc535f24c1a6c885e5c7446a47e212b1b1",name="/hvtss5ns87_dpe_test_healthcheck-no_health_check-1"} 2
+container_health{id="0a1a965f18a4bbc72387c3c212f84f1470aee6419d5e2fcbb199ddd219e7daf7",name="/hvtss5ns87_dpe_test_healthcheck-stopped-1"} 1
+container_health{id="5506174db67fd79094e6344209c698c958909ae0573cf726fcb6be96c8f13f43",name="/hvtss5ns87_dpe_test_healthcheck-healthy-1"} 4
 # EOF

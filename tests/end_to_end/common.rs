@@ -143,8 +143,6 @@ pub async fn get_metrics(port: u16, project_name: &str, run_mode: RunMode) -> St
 
         for capture in regex.captures_iter(metrics.as_str()) {
             let captured_project_name = capture.name("project_name").expect("regex is tested");
-            dbg!(captured_project_name.as_str(), project_name);
-
             if captured_project_name.as_str() != project_name {
                 continue;
             }
@@ -171,7 +169,7 @@ pub async fn get_metrics(port: u16, project_name: &str, run_mode: RunMode) -> St
     println!("last metrics result:");
     match last_metrics_result {
         LastMetricsResult::None => println!("None"),
-        LastMetricsResult::Error(error) => eprintln!("{error}"),
+        LastMetricsResult::Error(error) => eprintln!("{error:?}"),
         LastMetricsResult::Metrics(metrics) => println!("{metrics}"),
     }
 
@@ -224,7 +222,7 @@ pub async fn test_metrics(run_mode: RunMode) {
     let test_env = TestEnvironment::default();
     test_env.setup();
 
-    let health_check = HealthCheck::new(test_env.temp_dir.as_path());
+    let health_check = HealthCheck::new(test_env.temp_dir.as_path(), test_env.id.as_str());
     health_check.start();
 
     let docker_version = Command::new("docker").arg("-v").output().unwrap();
@@ -244,11 +242,11 @@ pub async fn test_metrics(run_mode: RunMode) {
     let _dpe: Box<dyn Dpe> = match run_mode {
         RunMode::Binary => Box::new(DpeBinary::start(port)),
         RunMode::DockerSocketMounted { compose_contents }
-        | RunMode::DockerSocketProxy { compose_contents } => {
-            let dpe = DpeDocker::new(test_env.temp_dir.as_path());
-            dpe.start(port, compose_contents);
-            Box::new(dpe)
-        }
+        | RunMode::DockerSocketProxy { compose_contents } => Box::new(DpeDocker::start(
+            port,
+            test_env.temp_dir.as_path(),
+            compose_contents,
+        )),
     };
 
     let metrics = get_metrics(port, test_env.id.as_str(), run_mode).await;
@@ -272,7 +270,7 @@ pub fn print_child_process_output(process: &mut Child) {
         let mut buf = String::new();
 
         if stdout.read_to_string(&mut buf).is_ok() {
-            println!("hi {buf}");
+            println!("{buf}");
         }
     }
 
@@ -280,7 +278,7 @@ pub fn print_child_process_output(process: &mut Child) {
         let mut buf = String::new();
 
         if stderr.read_to_string(&mut buf).is_ok() {
-            eprintln!("hi {buf}");
+            eprintln!("{buf}");
         }
     }
 }
@@ -292,6 +290,6 @@ pub fn print_process_output(output: &Output) {
     }
 
     if let Ok(stderr) = String::from_utf8(output.stderr.clone()) {
-        println!("{stderr}");
+        eprintln!("{stderr}");
     }
 }

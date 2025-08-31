@@ -88,8 +88,6 @@ impl Metric for ContainerHealthMetric {
             }
         };
 
-        dbg!(&summaries);
-
         stream::iter(summaries.into_iter())
             .filter(|summary| {
                 let is_blacklisted = summary.labels.as_ref().is_none_or(|labels| {
