@@ -14,8 +14,6 @@ pub enum Containers {
 }
 
 impl Containers {
-    pub const TOTAL: u8 = 5;
-
     pub fn health(&self) -> &str {
         match self {
             Containers::Dpe => "4",
