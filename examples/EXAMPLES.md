@@ -14,8 +14,6 @@ Configuration options are documented in the Configuration section of the README 
 
 ## Methods
 
-### Docker Socket Proxied
-
 Proxying the Docker Socket is the preferred method of deployment, namely because it reduces the blast radius of any 
 security vulnerabilities in docker-prometheus-exporter. However, this of course only shifts the security burden to the
 socket proxy rather than eliminating it which is unfortunately not possible. 
@@ -24,39 +22,38 @@ Even so, this is not a silver bullet as docker-prometheus-exporter still require
 exploited to collect sensitive information. You can read more about this in the Security Considerations section of the README
 [here.](../README.md#security-considerations)
 
-#### ([calum4/docker-socket-proxy](https://github.com/calum4/docker-socket-proxy))
+### [calum4/docker-socket-proxy](https://github.com/calum4/docker-socket-proxy) (Recommended)
 
 Fork of [linuxserver/docker-socket-proxy](https://github.com/linuxserver/docker-socket-proxy) utilising HAProxy,
 modified to enable fine-grained endpoint restriction for docker-prometheus-exporter. View the changes
 [here](https://github.com/linuxserver/docker-socket-proxy/compare/main...calum4:docker-socket-proxy:main).
 
-Compose file: [`compose.calum4.docker-socket-proxy.yml](compose.calum4.docker-socket-proxy.yml)
+Compose file: [compose.calum4.docker-socket-proxy.yml](compose.calum4.docker-socket-proxy.yml)
 
-#### [wollomatic/socket-proxy](https://github.com/wollomatic/socket-proxy)
+### [wollomatic/socket-proxy](https://github.com/wollomatic/socket-proxy) (Recommended)
 
 Highly configurable general purpose unix socket proxy written in Go with zero external dependencies.
 
-Compose file: [`compose.wollomatic.socket-proxy.yml](compose.wollomatic.socket-proxy.yml)
+Compose file: [compose.wollomatic.socket-proxy.yml](compose.wollomatic.socket-proxy.yml)
 
-#### [linuxserver/docker-socket-proxy](https://github.com/linuxserver/docker-socket-proxy)
+### [linuxserver/docker-socket-proxy](https://github.com/linuxserver/docker-socket-proxy) (Not Recommended)
 
-Unlike [`calum4/docker-socket-proxy`](#calum4docker-socket-proxy) and [`wollomatic/socket-proxy`](#wollomaticsocket-proxy),
-this does not provide fine-grained restriction to only the endpoints that `docker-prometheus-exporter` requires. 
+Unlike the previous two methods, this does not provide fine-grained restriction to only the endpoints that `docker-prometheus-exporter` requires. 
 
 Due to this, the `/containers` endpoint must be enabled, consequently opening other GET endpoints such as:
 - [ContainerExport](https://docs.docker.com/reference/api/engine/version/v1.48/#tag/Container/operation/ContainerExport)
 - [ContainerLogs](https://docs.docker.com/reference/api/engine/version/v1.48/#tag/Container/operation/ContainerLogs)
 - [ContainerAttachWebsocket](https://docs.docker.com/reference/api/engine/version/v1.48/#tag/Container/operation/ContainerAttachWebsocket)
 
-Compose file: [`compose.linuxserver.docker-socket-proxy.yml](compose.linuxserver.docker-socket-proxy.yml)
+Compose file: [compose.linuxserver.docker-socket-proxy.yml](compose.linuxserver.docker-socket-proxy.yml)
 
 ### Docker Socket Mounted (Not Recommended)
 
 Directly mounting the Docker Socket is NOT recommended for reasons described in the Security Considerations section of the README [here.](../README.md#security-considerations)
 
-Compose file: [`compose.mounted.yml`](compose.mounted.yml)
+Compose file: [compose.mounted.yml](compose.mounted.yml)
 
-# Run Binary Directly
+# Run Binary Directly (Not Recommended)
 
 Running the binary directly is NOT recommended for reasons described in the Security Considerations section of the README [here.](../README.md#security-considerations)
 

@@ -1,7 +1,7 @@
 services:
-  docker-socket-proxy:
+  socket-proxy:
     image: wollomatic/socket-proxy:1
-    container_name: docker-socket-proxy
+    container_name: socket-proxy
     restart: unless-stopped
     user: "0:0" # can instead be run as an unprivileged user with the docker group
     mem_limit: 64M
@@ -21,24 +21,23 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
-      - docker-socket-proxy
+      - socket-proxy
     labels:
       "docker-prometheus-exporter.metric.container_health.enabled": true
-
+  
   docker-prometheus-exporter:
-    #image: calum4/docker-prometheus-exporter:latest
+    image: calum4/docker-prometheus-exporter:latest
     container_name: docker-prometheus-exporter
-    build: .
     environment:
       - RUST_LOG=info,docker_prometheus_exporter=info
       - LISTEN_ADDR=0.0.0.0
-      - DOCKER_HOST=tcp://docker-socket-proxy:2375
+      - DOCKER_HOST=tcp://socket-proxy:2375
     ports:
       - "127.0.0.1:9000:9000"
     labels:
       "docker-prometheus-exporter.metric.container_health.enabled": true
     depends_on:
-      - docker-socket-proxy
+      - socket-proxy
     restart: unless-stopped
     read_only: true
     security_opt:
@@ -46,12 +45,12 @@ services:
     cap_drop:
       - ALL
     networks:
-      - docker-socket-proxy
+      - socket-proxy
       - docker-prometheus-exporter
     user: "65534:65534"
 
 networks:
-  docker-socket-proxy:
+  socket-proxy:
     driver: bridge
     internal: true
   docker-prometheus-exporter:
