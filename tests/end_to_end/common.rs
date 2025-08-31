@@ -1,10 +1,14 @@
 pub mod containers;
-pub mod healthcheck;
-pub mod test_environment;
 pub mod dpe;
+pub mod healthcheck;
 pub mod run_mode;
+pub mod test_environment;
 
 use crate::common::containers::Containers;
+use crate::common::dpe::{Dpe, DpeBinary, DpeDocker};
+use crate::common::healthcheck::{HealthCheck, assert_healthcheck_metric};
+use crate::common::run_mode::RunMode;
+use crate::common::test_environment::TestEnvironment;
 use rand::{Rng, rng};
 use regex::Regex;
 use reqwest::{Client, Request, Url};
@@ -13,7 +17,6 @@ use std::process::Command;
 use std::str::FromStr;
 use std::time::Duration;
 use tokio::time::interval;
-use crate::common::run_mode::RunMode;
 
 fn random_port() -> u16 {
     rng().random_range(49152..=65535)
@@ -43,7 +46,9 @@ impl From<RunMode> for GetMetricsMode {
     fn from(run_mode: RunMode) -> Self {
         match run_mode {
             RunMode::Binary => Self::Binary,
-            RunMode::DockerSocketMounted | RunMode::DockerSocketProxy => Self::Docker { is_healthy: false },
+            RunMode::DockerSocketMounted { .. } | RunMode::DockerSocketProxy { .. } => {
+                Self::Docker { is_healthy: false }
+            }
         }
     }
 }
@@ -51,7 +56,7 @@ impl From<RunMode> for GetMetricsMode {
 pub async fn get_metrics(port: u16, project_name: &str, run_mode: RunMode) -> String {
     let regex = Regex::new(healthcheck::CONTAINER_HEALTH_REGEX).expect("tested");
     let mut mode = run_mode.into();
-    
+
     let (client, req) = setup_metrics_req(port);
     let mut wakeup_interval = interval(Duration::from_secs(2));
 
@@ -156,4 +161,44 @@ fn setup_metrics_req(port: u16) -> (Client, Request) {
         .expect("hardcoded");
 
     (client, req)
+}
+
+pub async fn test_metrics(run_mode: RunMode) {
+    let port = available_port();
+
+    let test_env = TestEnvironment::default();
+    test_env.setup();
+
+    let health_check = HealthCheck::new(test_env.temp_dir.as_path());
+    health_check.start();
+
+    let docker_version = Command::new("docker").arg("-v").output().unwrap();
+
+    if !docker_version.status.success() {
+        panic!("docker is not available");
+    }
+
+    let _dpe: Box<dyn Dpe> = match run_mode {
+        RunMode::Binary => Box::new(DpeBinary::start(port)),
+        RunMode::DockerSocketMounted { compose_contents }
+        | RunMode::DockerSocketProxy { compose_contents } => {
+            let dpe = DpeDocker::new(test_env.temp_dir.as_path());
+            dpe.start(port, compose_contents);
+            Box::new(dpe)
+        }
+    };
+
+    let metrics = get_metrics(port, test_env.id.as_str(), run_mode).await;
+
+    assert_healthcheck_metric(metrics.as_str(), test_env.id.as_str(), run_mode);
+
+    let mut has_docker_up = false;
+    for line in metrics.lines() {
+        if line.starts_with("docker_up{} 1") {
+            has_docker_up = true;
+            break;
+        }
+    }
+
+    assert!(has_docker_up);
 }

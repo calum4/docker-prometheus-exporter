@@ -1,6 +1,6 @@
+use crate::common::run_mode::RunMode;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use crate::common::run_mode::RunMode;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum Containers {
@@ -29,8 +29,8 @@ impl Containers {
     pub const fn total(run_mode: RunMode) -> u8 {
         match run_mode {
             RunMode::Binary => 4,
-            RunMode::DockerSocketMounted => 5,
-            RunMode::DockerSocketProxy => 6,
+            RunMode::DockerSocketMounted { .. } => 5,
+            RunMode::DockerSocketProxy { .. } => 6,
         }
     }
 }
