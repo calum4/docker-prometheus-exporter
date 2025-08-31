@@ -20,12 +20,12 @@ impl Dpe {
     }
 
     fn start(&self, port: u16) {
-        let compose_template = include_str!("mounted_socket/compose.template.yml");
+        let compose_template = include_str!("../../examples/compose.mounted.yml");
         let compose_contents = compose_template
-            .replace("${DPE_MOUNTED_SOCKET_PORT}", port.to_string().as_str())
+            .replace(r##"127.0.0.1:9000:9000"##, format!("127.0.0.1:{}:9000", port).as_str())
             .replace(
-                "${DPE_DOCKERFILE_PATH}",
-                current_dir().unwrap().to_str().unwrap(),
+                "image: calum4/docker-prometheus-exporter",
+                format!("build: {}", current_dir().unwrap().to_str().unwrap()).as_str()
             );
 
         let mut compose_file = File::create(&self.compose_file_path).unwrap();
