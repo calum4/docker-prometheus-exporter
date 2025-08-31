@@ -1,6 +1,6 @@
 services:
   docker-socket-proxy:
-    image: calum4/docker-socket-proxy:latest
+    image: ghcr.io/calum4/docker-socket-proxy:latest
     container_name: docker-socket-proxy
     environment:
       - PING=1
