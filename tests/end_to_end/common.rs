@@ -2,6 +2,7 @@ pub mod containers;
 pub mod healthcheck;
 pub mod test_environment;
 pub mod dpe;
+pub mod run_mode;
 
 use crate::common::containers::Containers;
 use rand::{Rng, rng};
@@ -12,6 +13,7 @@ use std::process::Command;
 use std::str::FromStr;
 use std::time::Duration;
 use tokio::time::interval;
+use crate::common::run_mode::RunMode;
 
 fn random_port() -> u16 {
     rng().random_range(49152..=65535)
@@ -32,21 +34,25 @@ pub fn available_port() -> u16 {
     panic!("unable to find available port");
 }
 
-pub enum GetMetricsMode {
+enum GetMetricsMode {
     Binary,
     Docker { is_healthy: bool },
 }
 
-impl GetMetricsMode {
-    pub fn new_docker() -> Self {
-        Self::Docker { is_healthy: false }
+impl From<RunMode> for GetMetricsMode {
+    fn from(run_mode: RunMode) -> Self {
+        match run_mode {
+            RunMode::Binary => Self::Binary,
+            RunMode::DockerSocketMounted | RunMode::DockerSocketProxy => Self::Docker { is_healthy: false },
+        }
     }
 }
 
-pub async fn get_metrics(port: u16, project_name: &str, mut mode: GetMetricsMode) -> String {
+pub async fn get_metrics(port: u16, project_name: &str, run_mode: RunMode) -> String {
     let regex = Regex::new(healthcheck::CONTAINER_HEALTH_REGEX).expect("tested");
+    let mut mode = run_mode.into();
+    
     let (client, req) = setup_metrics_req(port);
-
     let mut wakeup_interval = interval(Duration::from_secs(2));
 
     for _ in 0..35 {

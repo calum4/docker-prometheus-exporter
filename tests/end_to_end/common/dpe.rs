@@ -17,6 +17,7 @@ impl Dpe {
 
     pub fn start(&self, port: u16, compose_contents: &str) {
         let compose_contents = compose_contents
+            .replace("container_name: docker-socket-proxy", "")
             .replace(
                 "image: calum4/docker-prometheus-exporter:latest",
                 format!("build: {}", current_dir().unwrap().to_str().unwrap()).as_str()
