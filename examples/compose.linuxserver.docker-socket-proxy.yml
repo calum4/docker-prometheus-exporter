@@ -1,0 +1,55 @@
+services:
+  docker-socket-proxy:
+    image: lscr.io/linuxserver/socket-proxy:latest
+    container_name: docker-socket-proxy
+    environment:
+      - PING=1
+      - VERSION=1
+      - EVENTS=0 # enabled by default
+      - CONTAINERS=1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    expose:
+      - "2357:2357/tcp"
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges=true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /run
+    networks:
+      - docker-socket-proxy
+    labels:
+      "docker-prometheus-exporter.metric.container_health.enabled": true
+
+  docker-prometheus-exporter:
+    image: calum4/docker-prometheus-exporter:latest
+    container_name: docker-prometheus-exporter
+    environment:
+      - RUST_LOG=info,docker_prometheus_exporter=info
+      - LISTEN_ADDR=0.0.0.0
+      - DOCKER_HOST=tcp://docker-socket-proxy:2375
+    ports:
+      - "127.0.0.1:9000:9000"
+    labels:
+      "docker-prometheus-exporter.metric.container_health.enabled": true
+    depends_on:
+      - docker-socket-proxy
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges=true
+    cap_drop:
+      - ALL
+    networks:
+      - docker-socket-proxy
+      - docker-prometheus-exporter
+    user: "65534:65534"
+
+networks:
+  docker-socket-proxy:
+    driver: bridge
+    internal: true
+  docker-prometheus-exporter:
