@@ -173,9 +173,17 @@ pub async fn test_metrics(run_mode: RunMode) {
     health_check.start();
 
     let docker_version = Command::new("docker").arg("-v").output().unwrap();
-
     if !docker_version.status.success() {
         panic!("docker is not available");
+    }
+
+    let compose_version = Command::new("docker")
+        .arg("compose")
+        .arg("version")
+        .output()
+        .unwrap();
+    if !compose_version.status.success() {
+        panic!("docker compose is not available");
     }
 
     let _dpe: Box<dyn Dpe> = match run_mode {
