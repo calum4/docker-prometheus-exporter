@@ -1,4 +1,5 @@
 use crate::common::Containers;
+use crate::common::run_mode::RunMode;
 use regex::Regex;
 use std::fs::File;
 use std::fs::remove_file;
@@ -6,7 +7,6 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::str::FromStr;
-use crate::common::run_mode::RunMode;
 
 pub struct HealthCheck {
     compose_file_path: PathBuf,
