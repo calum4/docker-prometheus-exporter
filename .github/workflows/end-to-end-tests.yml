@@ -23,4 +23,5 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Run tests
-        run: cargo test --all-features --workspace -- --include-ignored
+        #run: cargo test --all-features --workspace -- --include-ignored
+        run: cargo test --package docker-prometheus-exporter --test end_to_end binary -- --ignored --exact

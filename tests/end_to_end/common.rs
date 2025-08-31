@@ -107,8 +107,12 @@ pub async fn get_metrics(port: u16, project_name: &str, run_mode: RunMode) -> St
             GetMetricsMode::Docker { .. } => Containers::Dpe,
         };
 
+        eprintln!("{}", metrics.as_str());
+
         for capture in regex.captures_iter(metrics.as_str()) {
             let captured_project_name = capture.name("project_name").expect("regex is tested");
+            dbg!(captured_project_name.as_str(), project_name);
+
             if captured_project_name.as_str() != project_name {
                 continue;
             }
