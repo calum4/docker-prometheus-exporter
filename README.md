@@ -44,7 +44,8 @@ The full changelog can be found at [CHANGELOG.md](CHANGELOG.md)
 
 ## Usage
 
-Follow one of the installation methods detailed below
+For a full list of usage methods, view [EXAMPLES.md](examples/EXAMPLES.md) and the corresponding Docker Compose files
+in the `examples/` directory.
 
 ### Proxy Docker Socket (Recommended)
 
@@ -54,7 +55,7 @@ This method is **HIGHLY** recommended over directly mounting the Docker socket t
 ```yaml
 services:
   docker-socket-proxy:
-    image: ghcr.io/calum4/docker-socket-proxy:latest
+    image: calum4/docker-socket-proxy:latest
     container_name: docker-socket-proxy
     environment:
       - PING=1
@@ -114,9 +115,9 @@ networks:
 ```yaml
 services:
   docker-prometheus-exporter:
+    image: calum4/docker-prometheus-exporter:latest
     container_name: docker-prometheus-exporter
-    image: calum4/docker-prometheus-exporter:1
-    user: "0:0" # can instead be run as an unprivileged user with the docker group
+    user: "0:0" # root, can instead be run as an unprivileged user with the docker group
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
@@ -128,11 +129,8 @@ services:
       "docker-prometheus-exporter.metric.container_health.enabled": true
     restart: unless-stopped
     read_only: true
-```
 
-### Other Methods
-- [Crates.io](https://crates.io/crates/docker-prometheus-exporter)
-- [Github Releases](https://github.com/calum4/docker-prometheus-exporter/releases)
+```
 
 ## Security Considerations
 
@@ -162,217 +160,7 @@ Providing unrestricted access to the Docker socket is highly discouraged.
 > \- [OWASP - Docker Security Cheat Sheet](https://web.archive.org/web/20250330142850/https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html#rule-1-do-not-expose-the-docker-daemon-socket-even-to-the-containers)
 > via [The Internet Archive](https://archive.org), accessed 2025-04-17
 
-Therefore, it is recommended that access to the Docker socket is proxied, and endpoints whitelisted. 
-
-### [calum4/docker-socket-proxy](https://github.com/calum4/docker-socket-proxy)
-
-Fork of [linuxserver/docker-socket-proxy](https://github.com/linuxserver/docker-socket-proxy) utilising HAProxy, 
-modified to enable fine-grained endpoint restriction for docker-prometheus-exporter. View the changes 
-[here](https://github.com/linuxserver/docker-socket-proxy/compare/main...calum4:docker-socket-proxy:main).
-
-<details>
-  <summary>View docker-compose.yml</summary>
-
-  ```yaml
-  services:
-    docker-socket-proxy:
-      image: ghcr.io/calum4/docker-socket-proxy:latest
-      container_name: docker-socket-proxy
-      environment:
-        - PING=1
-        - VERSION=1
-        - EVENTS=0 # enabled by default
-        - CONTAINER_LIST=1
-        - CONTAINER_INSPECT=1
-      volumes:
-        - /var/run/docker.sock:/var/run/docker.sock:ro
-      expose:
-        - "2357:2357/tcp"
-      restart: unless-stopped
-      read_only: true
-      security_opt:
-        - no-new-privileges=true
-      cap_drop:
-        - ALL
-      tmpfs:
-        - /run
-      networks:
-        - docker-socket-proxy
-      labels:
-        "docker-prometheus-exporter.metric.container_health.enabled": true
-  
-    docker-prometheus-exporter:
-      image: calum4/docker-prometheus-exporter:latest
-      container_name: docker-prometheus-exporter
-      environment:
-        - RUST_LOG=info,docker_prometheus_exporter=info
-        - LISTEN_ADDR=0.0.0.0
-        - DOCKER_HOST=tcp://docker-socket-proxy:2375
-      ports:
-        - "127.0.0.1:9000:9000"
-      labels:
-        "docker-prometheus-exporter.metric.container_health.enabled": true
-      depends_on:
-        - docker-socket-proxy
-      restart: unless-stopped
-      read_only: true
-      security_opt:
-        - no-new-privileges=true
-      cap_drop:
-        - ALL
-      networks:
-        - docker-socket-proxy
-        - docker-prometheus-exporter
-      user: "65534:65534"
-  
-  networks:
-    docker-socket-proxy:
-      driver: bridge
-      internal: true
-    docker-prometheus-exporter:
-  ```
-
-</details>
-
-### [wollomatic/socket-proxy](https://github.com/wollomatic/socket-proxy)
-
-Highly configurable general purpose unix socket proxy written in Go with zero external dependencies.
-
-<details>
-  <summary>View docker-compose.yml</summary>
-
-  ```yaml
-  services:
-    docker-socket-proxy:
-      image: wollomatic/socket-proxy:1
-      container_name: docker-socket-proxy
-      restart: unless-stopped
-      user: "0:0" # can instead be run as an unprivileged user with the docker group
-      mem_limit: 64M
-      read_only: true
-      cap_drop:
-        - ALL
-      security_opt:
-        - no-new-privileges
-      command:
-        - '-loglevel=info'
-        - '-listenip=0.0.0.0'
-        - '-allowfrom=docker-prometheus-exporter'
-        - '-allowGET=^(/v[\d\.]+)?/((version)|(_ping)|(containers/json)|(containers/[a-zA-Z0-9_.-]+/json))$'
-        - '-watchdoginterval=3600' # check once per hour for socket availability
-        - '-stoponwatchdog' # halt program on error and let compose restart it
-        - '-shutdowngracetime=5' # wait 5 seconds before shutting down
-      volumes:
-        - /var/run/docker.sock:/var/run/docker.sock:ro
-      networks:
-        - docker-socket-proxy
-      labels:
-        "docker-prometheus-exporter.metric.container_health.enabled": true
-  
-    docker-prometheus-exporter:
-      image: calum4/docker-prometheus-exporter:latest
-      container_name: docker-prometheus-exporter
-      environment:
-        - RUST_LOG=info,docker_prometheus_exporter=info
-        - LISTEN_ADDR=0.0.0.0
-        - DOCKER_HOST=tcp://docker-socket-proxy:2375
-      ports:
-        - "127.0.0.1:9000:9000"
-      labels:
-        "docker-prometheus-exporter.metric.container_health.enabled": true
-      depends_on:
-        - docker-socket-proxy
-      restart: unless-stopped
-      read_only: true
-      security_opt:
-        - no-new-privileges=true
-      cap_drop:
-        - ALL
-      networks:
-        - docker-socket-proxy
-        - docker-prometheus-exporter
-      user: "65534:65534"
-  
-  networks:
-    docker-socket-proxy:
-      driver: bridge
-      internal: true
-    docker-prometheus-exporter:
-  ```
-
-</details>
-
-### [linuxserver/docker-socket-proxy](https://github.com/linuxserver/docker-socket-proxy)
-
-Unlike the previous 2 options, this does not provide fine-grained restriction to only the endpoints that
-`docker-prometheus-exporter` requires. Due to this, the `/containers` endpoint must be enabled, consequently opening
-other GET endpoints such as:
-- [ContainerExport](https://docs.docker.com/reference/api/engine/version/v1.48/#tag/Container/operation/ContainerExport)
-- [ContainerLogs](https://docs.docker.com/reference/api/engine/version/v1.48/#tag/Container/operation/ContainerLogs)
-- [ContainerAttachWebsocket](https://docs.docker.com/reference/api/engine/version/v1.48/#tag/Container/operation/ContainerAttachWebsocket)
-
-<details>
-  <summary>View docker-compose.yml</summary>
-
-  ```yaml
-  services:
-    docker-socket-proxy:
-      image: lscr.io/linuxserver/socket-proxy:latest
-      container_name: docker-socket-proxy
-      environment:
-        - PING=1
-        - VERSION=1
-        - EVENTS=0 # enabled by default
-        - CONTAINERS=1
-      volumes:
-        - /var/run/docker.sock:/var/run/docker.sock:ro
-      expose:
-        - "2357:2357/tcp"
-      restart: unless-stopped
-      read_only: true
-      security_opt:
-        - no-new-privileges=true
-      cap_drop:
-        - ALL
-      tmpfs:
-        - /run
-      networks:
-        - docker-socket-proxy
-      labels:
-        "docker-prometheus-exporter.metric.container_health.enabled": true
-  
-    docker-prometheus-exporter:
-      image: calum4/docker-prometheus-exporter:latest
-      container_name: docker-prometheus-exporter
-      environment:
-        - RUST_LOG=info,docker_prometheus_exporter=info
-        - LISTEN_ADDR=0.0.0.0
-        - DOCKER_HOST=tcp://docker-socket-proxy:2375
-      ports:
-        - "127.0.0.1:9000:9000"
-      labels:
-        "docker-prometheus-exporter.metric.container_health.enabled": true
-      depends_on:
-        - docker-socket-proxy
-      restart: unless-stopped
-      read_only: true
-      security_opt:
-        - no-new-privileges=true
-      cap_drop:
-        - ALL
-      networks:
-        - docker-socket-proxy
-        - docker-prometheus-exporter
-      user: "65534:65534"
-
-  networks:
-    docker-socket-proxy:
-      driver: bridge
-      internal: true
-    docker-prometheus-exporter:
-  ```
-
-</details>
+Therefore, it is recommended that access to the Docker socket is proxied, and endpoints whitelisted.
 
 ## Metrics
 | Metric Name        | Description                                    | Units/Values                                                                                | Labels                                          |
