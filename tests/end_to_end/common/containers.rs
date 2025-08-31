@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
+use crate::common::run_mode::RunMode;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum Containers {
@@ -8,6 +9,7 @@ pub enum Containers {
     Unhealthy,
     NoHealthCheck,
     Stopped,
+    DockerSocketProxy,
 }
 
 impl Containers {
@@ -20,6 +22,15 @@ impl Containers {
             Containers::Unhealthy => "3",
             Containers::NoHealthCheck => "2",
             Containers::Stopped => "1",
+            Containers::DockerSocketProxy => "2",
+        }
+    }
+
+    pub const fn total(run_mode: RunMode) -> u8 {
+        match run_mode {
+            RunMode::Binary => 4,
+            RunMode::DockerSocketMounted => 5,
+            RunMode::DockerSocketProxy => 6,
         }
     }
 }
@@ -32,6 +43,7 @@ impl Display for Containers {
             Containers::Unhealthy => "unhealthy",
             Containers::NoHealthCheck => "no_health_check",
             Containers::Stopped => "stopped",
+            Containers::DockerSocketProxy => "docker-socket-proxy",
         })
     }
 }
@@ -46,6 +58,7 @@ impl FromStr for Containers {
             "unhealthy" => Ok(Self::Unhealthy),
             "no_health_check" => Ok(Self::NoHealthCheck),
             "stopped" => Ok(Self::Stopped),
+            "docker-socket-proxy" => Ok(Self::DockerSocketProxy),
             _ => Err(()),
         }
     }
@@ -71,5 +84,9 @@ fn display_equals_from_str() {
     assert_eq!(
         Stopped,
         Containers::from_str(Stopped.to_string().as_str()).unwrap()
+    );
+    assert_eq!(
+        DockerSocketProxy,
+        Containers::from_str(DockerSocketProxy.to_string().as_str()).unwrap()
     );
 }

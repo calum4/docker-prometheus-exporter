@@ -1,8 +1,8 @@
 use crate::common;
-use crate::common::GetMetricsMode;
 use crate::common::healthcheck::{HealthCheck, assert_healthcheck_metric};
 use crate::common::test_environment::TestEnvironment;
 use std::process::{Child, Command, Stdio};
+use crate::common::run_mode::RunMode;
 
 struct Dpe {
     process: Child,
@@ -36,6 +36,7 @@ impl Drop for Dpe {
 #[ignore]
 #[tokio::test]
 async fn binary() {
+    const RUN_MODE: RunMode = RunMode::Binary;
     let port = common::available_port();
 
     let test_env = TestEnvironment::default();
@@ -52,9 +53,9 @@ async fn binary() {
 
     let _dpe = Dpe::start(port);
 
-    let metrics = common::get_metrics(port, test_env.id.as_str(), GetMetricsMode::Binary).await;
+    let metrics = common::get_metrics(port, test_env.id.as_str(), RUN_MODE).await;
 
-    assert_healthcheck_metric(metrics.as_str(), test_env.id.as_str(), false);
+    assert_healthcheck_metric(metrics.as_str(), test_env.id.as_str(), RUN_MODE);
 
     for line in metrics.lines() {
         if line.starts_with("docker_up{} 1") {

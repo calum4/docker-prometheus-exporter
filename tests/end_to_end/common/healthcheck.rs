@@ -6,6 +6,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::str::FromStr;
+use crate::common::run_mode::RunMode;
 
 pub struct HealthCheck {
     compose_file_path: PathBuf,
@@ -73,7 +74,7 @@ impl Drop for HealthCheck {
     }
 }
 
-pub fn assert_healthcheck_metric(metrics: &str, project_name: &str, dpe_running_on_docker: bool) {
+pub fn assert_healthcheck_metric(metrics: &str, project_name: &str, run_mode: RunMode) {
     let regex = Regex::new(CONTAINER_HEALTH_REGEX).expect("regex is tested");
 
     let mut total_captured_containers: u8 = 0;
@@ -94,13 +95,7 @@ pub fn assert_healthcheck_metric(metrics: &str, project_name: &str, dpe_running_
         total_captured_containers += 1;
     }
 
-    let total_containers = if dpe_running_on_docker {
-        Containers::TOTAL
-    } else {
-        Containers::TOTAL - 1
-    };
-
-    assert_eq!(total_captured_containers, total_containers);
+    assert_eq!(total_captured_containers, Containers::total(run_mode));
 }
 
 pub const CONTAINER_HEALTH_REGEX: &str = r##"container_health\{id="(?<id>\w+)",name="/?(?<project_name>\w+_dpe_test)-(?<name>[\w_-]+)-\d"}\s(?<health>[1-4])"##;
