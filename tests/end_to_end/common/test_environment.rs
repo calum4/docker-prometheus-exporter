@@ -49,7 +49,7 @@ impl Drop for TestEnvironment {
     fn drop(&mut self) {
         if let Err(error) = remove_dir_all(self.temp_dir.as_path()) {
             eprintln!(
-                "unable to remove the test's temporary directory at '{:#?}', error: {error}",
+                "unable to remove the test's temporary directory at '{:#?}', error: {error:?}",
                 self.temp_dir.as_path()
             );
         }
