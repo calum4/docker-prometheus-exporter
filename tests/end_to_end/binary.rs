@@ -35,7 +35,7 @@ impl Drop for Dpe {
 
 #[ignore]
 #[tokio::test]
-async fn native() {
+async fn binary() {
     let port = common::available_port();
 
     let test_env = TestEnvironment::default();
@@ -52,7 +52,7 @@ async fn native() {
 
     let _dpe = Dpe::start(port);
 
-    let metrics = common::get_metrics(port, test_env.id.as_str(), GetMetricsMode::Native).await;
+    let metrics = common::get_metrics(port, test_env.id.as_str(), GetMetricsMode::Binary).await;
 
     assert_healthcheck_metric(metrics.as_str(), test_env.id.as_str(), false);
 

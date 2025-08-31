@@ -33,7 +33,7 @@ pub fn available_port() -> u16 {
 }
 
 pub enum GetMetricsMode {
-    Native,
+    Binary,
     Docker { is_healthy: bool },
 }
 
@@ -92,7 +92,7 @@ pub async fn get_metrics(port: u16, project_name: &str, mut mode: GetMetricsMode
         };
 
         let healthcheck_container = match mode {
-            GetMetricsMode::Native => Containers::Healthy,
+            GetMetricsMode::Binary => Containers::Healthy,
             GetMetricsMode::Docker { .. } => Containers::Dpe,
         };
 
@@ -122,7 +122,7 @@ pub async fn get_metrics(port: u16, project_name: &str, mut mode: GetMetricsMode
     }
 
     match mode {
-        GetMetricsMode::Native => panic!("timed out before DPE was ready"),
+        GetMetricsMode::Binary => panic!("timed out before DPE was ready"),
         GetMetricsMode::Docker { is_healthy, .. } => {
             panic!("timed out before DPE was ready: is_healthy={is_healthy}");
         }
