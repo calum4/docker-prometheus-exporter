@@ -1,5 +1,5 @@
-use crate::common::Containers;
 use crate::common::run_mode::RunMode;
+use crate::common::{Containers, print_process_output};
 use regex::Regex;
 use std::fs::File;
 use std::fs::remove_file;
@@ -32,7 +32,7 @@ impl HealthCheck {
     pub fn start(&self) {
         copy_healthcheck_compose_file(&self.compose_file_path);
 
-        Command::new("docker")
+        let output = Command::new("docker")
             .arg("compose")
             .arg("-f")
             .arg(&self.compose_file_path)
@@ -40,6 +40,8 @@ impl HealthCheck {
             .arg("-d")
             .output()
             .unwrap();
+
+        print_process_output(&output);
     }
 }
 
@@ -53,14 +55,8 @@ impl Drop for HealthCheck {
             .output();
 
         match down {
-            Ok(mut out) if !out.status.success() => {
-                out.stdout.push(b'\n');
-                out.stdout.extend(out.stderr);
-
-                match String::from_utf8(out.stdout) {
-                    Ok(s) => eprintln!("failed to teardown healthcheck containers: {s}"),
-                    Err(_) => eprintln!("failed to teardown healthcheck containers"),
-                }
+            Ok(out) if !out.status.success() => {
+                print_process_output(&out);
             }
             Err(error) => {
                 eprintln!("failed to teardown healthcheck containers: {error}");

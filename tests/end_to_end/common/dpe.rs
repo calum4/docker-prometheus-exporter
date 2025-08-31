@@ -1,8 +1,9 @@
+use crate::common::{print_child_process_output, print_process_output};
 use std::env::current_dir;
 use std::fs::{File, remove_file};
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::process::{Child, Command, Stdio};
+use std::process::{Child, Command};
 
 pub trait Dpe {}
 
@@ -29,6 +30,10 @@ impl DpeDocker {
             )
             .replace("container_name: docker-prometheus-exporter", "")
             .replace(
+                "RUST_LOG=info,docker_prometheus_exporter=info",
+                "RUST_LOG=info,docker_prometheus_exporter=debug",
+            )
+            .replace(
                 r##"127.0.0.1:9000:9000"##,
                 format!("127.0.0.1:{}:9000", port).as_str(),
             );
@@ -39,40 +44,38 @@ impl DpeDocker {
         compose_file.flush().unwrap();
         compose_file.sync_all().unwrap();
 
-        Command::new("docker")
+        let mut command = Command::new("docker");
+        command
             .arg("compose")
             .arg("-f")
             .arg(&self.compose_file_path)
             .arg("up")
             .arg("-d")
-            .arg("--build")
-            .output()
-            .unwrap();
+            .arg("--build");
+
+        println!("Running: {:?}", command);
+
+        let output = command.output().unwrap();
+
+        print_process_output(&output);
     }
 }
 
 impl Drop for DpeDocker {
     fn drop(&mut self) {
-        let down = Command::new("docker")
-            .arg("compose")
+        let mut down = Command::new("docker");
+        down.arg("compose")
             .arg("-f")
             .arg(&self.compose_file_path)
             .arg("down")
             .arg("--rmi")
-            .arg("local") // delete image
-            .output();
+            .arg("local"); // delete image
 
-        match down {
-            Ok(mut out) if !out.status.success() => {
-                out.stdout.push(b'\n');
-                out.stdout.extend(out.stderr);
+        println!("Running: {:?}", down);
 
-                match String::from_utf8(out.stdout) {
-                    Ok(s) => {
-                        eprintln!("failed to teardown docker-prometheus-exporter containers: {s}")
-                    }
-                    Err(_) => eprintln!("failed to teardown docker-prometheus-exporter containers"),
-                }
+        match down.output() {
+            Ok(out) if !out.status.success() => {
+                print_process_output(&out);
             }
             Err(error) => {
                 eprintln!("failed to teardown docker-prometheus-exporter containers: {error}");
@@ -94,16 +97,19 @@ impl Dpe for DpeBinary {}
 
 impl DpeBinary {
     pub fn start(port: u16) -> Self {
-        let process = Command::new("cargo")
+        let mut process = Command::new("cargo");
+        process
             .arg("run")
             .arg("--")
             .arg("--listen-addr")
             .arg("127.0.0.1")
             .arg("--listen-port")
             .arg(port.to_string())
-            .stdout(Stdio::piped())
-            .spawn()
-            .unwrap();
+            .env("RUST_LOG", "info,docker_prometheus_exporter=debug");
+
+        println!("Running: {:?}", &process);
+
+        let process = process.spawn().unwrap();
 
         Self { process }
     }
@@ -114,5 +120,7 @@ impl Drop for DpeBinary {
         if let Err(error) = self.process.kill() {
             eprintln!("failed to kill docker-prometheus-exporter process: {error}");
         }
+
+        print_child_process_output(&mut self.process);
     }
 }

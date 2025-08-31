@@ -12,8 +12,9 @@ use crate::common::test_environment::TestEnvironment;
 use rand::{Rng, rng};
 use regex::Regex;
 use reqwest::{Client, Request, Url};
+use std::io::Read;
 use std::net::{Ipv4Addr, SocketAddr, TcpListener};
-use std::process::Command;
+use std::process::{Child, Command, Output};
 use std::str::FromStr;
 use std::time::Duration;
 use tokio::time::interval;
@@ -39,7 +40,10 @@ pub fn available_port() -> u16 {
 
 enum GetMetricsMode {
     Binary,
-    Docker { is_healthy: bool },
+    Docker {
+        is_healthy: bool,
+        last_output: Option<Output>,
+    },
 }
 
 impl From<RunMode> for GetMetricsMode {
@@ -47,10 +51,19 @@ impl From<RunMode> for GetMetricsMode {
         match run_mode {
             RunMode::Binary => Self::Binary,
             RunMode::DockerSocketMounted { .. } | RunMode::DockerSocketProxy { .. } => {
-                Self::Docker { is_healthy: false }
+                Self::Docker {
+                    is_healthy: false,
+                    last_output: None,
+                }
             }
         }
     }
+}
+
+enum LastMetricsResult {
+    None,
+    Error(reqwest::Error),
+    Metrics(String),
 }
 
 pub async fn get_metrics(port: u16, project_name: &str, run_mode: RunMode) -> String {
@@ -58,12 +71,19 @@ pub async fn get_metrics(port: u16, project_name: &str, run_mode: RunMode) -> St
     let mut mode = run_mode.into();
 
     let (client, req) = setup_metrics_req(port);
+
+    let mut last_metrics_result = LastMetricsResult::None;
+
     let mut wakeup_interval = interval(Duration::from_secs(2));
 
     for _ in 0..35 {
         wakeup_interval.tick().await;
 
-        if let GetMetricsMode::Docker { ref mut is_healthy } = mode {
+        if let GetMetricsMode::Docker {
+            ref mut is_healthy,
+            ref mut last_output,
+        } = mode
+        {
             let container_name = format!("/{project_name}-docker-prometheus-exporter-1");
 
             let output = Command::new("docker")
@@ -75,6 +95,8 @@ pub async fn get_metrics(port: u16, project_name: &str, run_mode: RunMode) -> St
             let Ok(output) = output else {
                 continue;
             };
+
+            *last_output = Some(output.clone());
 
             if !output.status.success() {
                 continue;
@@ -91,23 +113,33 @@ pub async fn get_metrics(port: u16, project_name: &str, run_mode: RunMode) -> St
             *is_healthy = true;
         }
 
-        let Ok(res) = client
+        let res = client
             .execute(req.try_clone().expect("get request has no body"))
-            .await
-        else {
-            continue;
+            .await;
+
+        let res = match res {
+            Ok(res) => res,
+            Err(error) => {
+                last_metrics_result = LastMetricsResult::Error(error);
+                continue;
+            }
         };
 
-        let Ok(metrics) = res.text().await else {
-            continue;
+        let metrics = match res.text().await {
+            Ok(metrics) => {
+                last_metrics_result = LastMetricsResult::Metrics(metrics.clone());
+                metrics
+            }
+            Err(error) => {
+                last_metrics_result = LastMetricsResult::Error(error);
+                continue;
+            }
         };
 
         let healthcheck_container = match mode {
             GetMetricsMode::Binary => Containers::Healthy,
             GetMetricsMode::Docker { .. } => Containers::Dpe,
         };
-
-        eprintln!("{}", metrics.as_str());
 
         for capture in regex.captures_iter(metrics.as_str()) {
             let captured_project_name = capture.name("project_name").expect("regex is tested");
@@ -136,9 +168,28 @@ pub async fn get_metrics(port: u16, project_name: &str, run_mode: RunMode) -> St
         }
     }
 
+    println!("last metrics result:");
+    match last_metrics_result {
+        LastMetricsResult::None => println!("None"),
+        LastMetricsResult::Error(error) => eprintln!("{error}"),
+        LastMetricsResult::Metrics(metrics) => println!("{metrics}"),
+    }
+
     match mode {
         GetMetricsMode::Binary => panic!("timed out before DPE was ready"),
-        GetMetricsMode::Docker { is_healthy, .. } => {
+        GetMetricsMode::Docker {
+            is_healthy,
+            last_output,
+        } => {
+            if !is_healthy {
+                println!("docker-prometheus-exporter health status:");
+
+                match last_output {
+                    None => eprintln!("no output"),
+                    Some(output) => print_process_output(&output),
+                }
+            }
+
             panic!("timed out before DPE was ready: is_healthy={is_healthy}");
         }
     }
@@ -213,4 +264,34 @@ pub async fn test_metrics(run_mode: RunMode) {
     }
 
     assert!(has_docker_up);
+}
+
+/// Does not panic, safe to use in destructors
+pub fn print_child_process_output(process: &mut Child) {
+    if let Some(stdout) = process.stdout.as_mut() {
+        let mut buf = String::new();
+
+        if stdout.read_to_string(&mut buf).is_ok() {
+            println!("hi {buf}");
+        }
+    }
+
+    if let Some(stderr) = process.stderr.as_mut() {
+        let mut buf = String::new();
+
+        if stderr.read_to_string(&mut buf).is_ok() {
+            eprintln!("hi {buf}");
+        }
+    }
+}
+
+/// Does not panic, safe to use in destructors
+pub fn print_process_output(output: &Output) {
+    if let Ok(stdout) = String::from_utf8(output.stdout.clone()) {
+        println!("{stdout}");
+    }
+
+    if let Ok(stderr) = String::from_utf8(output.stderr.clone()) {
+        println!("{stderr}");
+    }
 }
