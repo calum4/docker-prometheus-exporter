@@ -32,11 +32,23 @@ modified to enable fine-grained endpoint restriction for docker-prometheus-expor
 
 Compose file: [`compose.calum4.docker-socket-proxy.yml](compose.calum4.docker-socket-proxy.yml)
 
-### [wollomatic/socket-proxy](https://github.com/wollomatic/socket-proxy)
+#### [wollomatic/socket-proxy](https://github.com/wollomatic/socket-proxy)
 
 Highly configurable general purpose unix socket proxy written in Go with zero external dependencies.
 
 Compose file: [`compose.wollomatic.socket-proxy.yml](compose.wollomatic.socket-proxy.yml)
+
+#### [linuxserver/docker-socket-proxy](https://github.com/linuxserver/docker-socket-proxy)
+
+Unlike [`calum4/docker-socket-proxy`](#calum4docker-socket-proxy) and [`wollomatic/socket-proxy`](#wollomaticsocket-proxy),
+this does not provide fine-grained restriction to only the endpoints that `docker-prometheus-exporter` requires. 
+
+Due to this, the `/containers` endpoint must be enabled, consequently opening other GET endpoints such as:
+- [ContainerExport](https://docs.docker.com/reference/api/engine/version/v1.48/#tag/Container/operation/ContainerExport)
+- [ContainerLogs](https://docs.docker.com/reference/api/engine/version/v1.48/#tag/Container/operation/ContainerLogs)
+- [ContainerAttachWebsocket](https://docs.docker.com/reference/api/engine/version/v1.48/#tag/Container/operation/ContainerAttachWebsocket)
+
+Compose file: [`compose.linuxserver.docker-socket-proxy.yml](compose.linuxserver.docker-socket-proxy.yml)
 
 ### Docker Socket Mounted (Not Recommended)
 
