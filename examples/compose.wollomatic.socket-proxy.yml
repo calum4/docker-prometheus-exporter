@@ -1,0 +1,56 @@
+services:
+  socket-proxy:
+    image: wollomatic/socket-proxy:1
+    container_name: socket-proxy
+    restart: unless-stopped
+    user: "0:0" # can instead be run as an unprivileged user with the docker group
+    mem_limit: 64M
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges
+    command:
+      - '-loglevel=info'
+      - '-listenip=0.0.0.0'
+      - '-allowfrom=docker-prometheus-exporter'
+      - '-allowGET=^(/v[\d\.]+)?/((version)|(_ping)|(containers/json)|(containers/[a-zA-Z0-9_.-]+/json))$'
+      - '-watchdoginterval=3600' # check once per hour for socket availability
+      - '-stoponwatchdog' # halt program on error and let compose restart it
+      - '-shutdowngracetime=5' # wait 5 seconds before shutting down
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - socket-proxy
+    labels:
+      "docker-prometheus-exporter.metric.container_health.enabled": true
+  
+  docker-prometheus-exporter:
+    image: calum4/docker-prometheus-exporter:latest
+    container_name: docker-prometheus-exporter
+    environment:
+      - RUST_LOG=info,docker_prometheus_exporter=info
+      - LISTEN_ADDR=0.0.0.0
+      - DOCKER_HOST=tcp://socket-proxy:2375
+    ports:
+      - "127.0.0.1:9000:9000"
+    labels:
+      "docker-prometheus-exporter.metric.container_health.enabled": true
+    depends_on:
+      - socket-proxy
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges=true
+    cap_drop:
+      - ALL
+    networks:
+      - socket-proxy
+      - docker-prometheus-exporter
+    user: "65534:65534"
+
+networks:
+  socket-proxy:
+    driver: bridge
+    internal: true
+  docker-prometheus-exporter:

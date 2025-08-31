@@ -32,6 +32,11 @@ modified to enable fine-grained endpoint restriction for docker-prometheus-expor
 
 Compose file: [`compose.calum4.docker-socket-proxy.yml](compose.calum4.docker-socket-proxy.yml)
 
+### [wollomatic/socket-proxy](https://github.com/wollomatic/socket-proxy)
+
+Highly configurable general purpose unix socket proxy written in Go with zero external dependencies.
+
+Compose file: [`compose.wollomatic.socket-proxy.yml](compose.wollomatic.socket-proxy.yml)
 
 ### Docker Socket Mounted (Not Recommended)
 

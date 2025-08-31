@@ -10,6 +10,7 @@ pub enum Containers {
     NoHealthCheck,
     Stopped,
     DockerSocketProxy,
+    SocketProxy,
 }
 
 impl Containers {
@@ -23,6 +24,7 @@ impl Containers {
             Containers::NoHealthCheck => "2",
             Containers::Stopped => "1",
             Containers::DockerSocketProxy => "2",
+            Containers::SocketProxy => "2",
         }
     }
 
@@ -44,6 +46,7 @@ impl Display for Containers {
             Containers::NoHealthCheck => "no_health_check",
             Containers::Stopped => "stopped",
             Containers::DockerSocketProxy => "docker-socket-proxy",
+            Containers::SocketProxy => "socket-proxy",
         })
     }
 }
@@ -59,6 +62,7 @@ impl FromStr for Containers {
             "no_health_check" => Ok(Self::NoHealthCheck),
             "stopped" => Ok(Self::Stopped),
             "docker-socket-proxy" => Ok(Self::DockerSocketProxy),
+            "socket-proxy" => Ok(Self::SocketProxy),
             _ => Err(()),
         }
     }
@@ -88,5 +92,9 @@ fn display_equals_from_str() {
     assert_eq!(
         DockerSocketProxy,
         Containers::from_str(DockerSocketProxy.to_string().as_str()).unwrap()
+    );
+    assert_eq!(
+        SocketProxy,
+        Containers::from_str(SocketProxy.to_string().as_str()).unwrap()
     );
 }
