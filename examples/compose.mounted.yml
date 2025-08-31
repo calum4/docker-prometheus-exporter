@@ -1,6 +1,7 @@
 services:
   docker-prometheus-exporter:
-    image: calum4/docker-prometheus-exporter
+    image: calum4/docker-prometheus-exporter:latest
+    container_name: docker-prometheus-exporter
     user: "0:0" # root, can instead be run as an unprivileged user with the docker group
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro

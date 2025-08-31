@@ -1,14 +1,14 @@
 use crate::common;
 use crate::common::dpe::Dpe;
 use crate::common::GetMetricsMode;
-use crate::common::healthcheck::{HealthCheck, assert_healthcheck_metric};
+use crate::common::healthcheck::{assert_healthcheck_metric, HealthCheck};
 use crate::common::test_environment::TestEnvironment;
 
 #[ignore]
 #[tokio::test]
-async fn mounted_socket() {
-    const COMPOSE_CONTENTS: &str = include_str!("../../examples/compose.mounted.yml");
-    
+async fn calum4_docker_socket_proxy() {
+    const COMPOSE_CONTENTS: &str = include_str!("../../examples/compose.calum4.docker-socket-proxy.yml");
+
     let port = common::available_port();
 
     let test_env = TestEnvironment::default();
