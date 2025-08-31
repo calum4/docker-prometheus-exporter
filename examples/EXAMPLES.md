@@ -10,10 +10,42 @@ All the Docker examples utilise Docker Compose, you can find an installation gui
 4. Docker Prometheus Exporter will now be available at [http://127.0.0.1:9000/metrics](http://127.0.0.1:9000/metrics).
 5. Now you can set up Prometheus and enjoy your Docker metrics! 
 
+Configuration options are documented in the Configuration section of the README [here.](../README.md#Configuration)
+
 ## Methods
+
+### Docker Socket Proxied
+
+Proxying the Docker Socket is the preferred method of deployment, namely because it reduces the blast radius of any 
+security vulnerabilities in docker-prometheus-exporter. However, this of course only shifts the security burden to the
+socket proxy rather than eliminating it which is unfortunately not possible. 
+
+Even so, this is not a silver bullet as docker-prometheus-exporter still requires access to endpoints which could be
+exploited to collect sensitive information. You can read more about this in the Security Considerations section of the README
+[here.](../README.md#security-considerations)
+
+#### ([calum4/docker-socket-proxy](https://github.com/calum4/docker-socket-proxy))
+
+Fork of [linuxserver/docker-socket-proxy](https://github.com/linuxserver/docker-socket-proxy) utilising HAProxy,
+modified to enable fine-grained endpoint restriction for docker-prometheus-exporter. View the changes
+[here](https://github.com/linuxserver/docker-socket-proxy/compare/main...calum4:docker-socket-proxy:main).
+
+Compose file: [`compose.calum4.docker-socket-proxy.yml](compose.calum4.docker-socket-proxy.yml)
+
 
 ### Docker Socket Mounted (Not Recommended)
 
-This method is not recommended for reasons described in the Security section of the README [here.](../README.md#security)
+Directly mounting the Docker Socket is NOT recommended for reasons described in the Security Considerations section of the README [here.](../README.md#security-considerations)
 
 Compose file: [`compose.mounted.yml`](compose.mounted.yml)
+
+# Run Binary Directly
+
+Running the binary directly is NOT recommended for reasons described in the Security Considerations section of the README [here.](../README.md#security-considerations)
+
+## Usage
+
+1. Install the binary by either downloading it from the GitHub Releases or by running `cargo install docker-prometheus-exporter`.
+2. Run the binary with `docker-compose-exporter`, the default configuration will likely satisfy your need.
+
+Configuration options are documented in the Configuration section of the README [here.](../README.md#Configuration)

@@ -1,6 +1,7 @@
 pub mod containers;
 pub mod healthcheck;
 pub mod test_environment;
+pub mod dpe;
 
 use crate::common::containers::Containers;
 use rand::{Rng, rng};

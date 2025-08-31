@@ -23,7 +23,7 @@
 <p align="center">
   <a href="#changelog">Changelog</a> •
   <a href="#usage">Usage</a> •
-  <a href="#security">Security</a> •
+  <a href="#security-considerations">Security Considerations</a> •
   <a href="#metrics">Metrics</a> •
   <a href="#environment-variables">Configuration</a> •
   <a href="#license">License</a> •
@@ -49,7 +49,7 @@ Follow one of the installation methods detailed below
 ### Proxy Docker Socket (Recommended)
 
 This method is **HIGHLY** recommended over directly mounting the Docker socket to the container, see the
-[security section](#security).
+[security section](#security-considerations).
 
 ```yaml
 services:
@@ -134,7 +134,7 @@ services:
 - [Crates.io](https://crates.io/crates/docker-prometheus-exporter)
 - [Github Releases](https://github.com/calum4/docker-prometheus-exporter/releases)
 
-## Security
+## Security Considerations
 
 Docker Prometheus Exporter requires access to the Docker Engine API, more specifically the following endpoints:
 
