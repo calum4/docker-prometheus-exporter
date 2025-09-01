@@ -9,7 +9,6 @@ pub trait Dpe {}
 
 pub struct DpeDocker {
     compose_file_path: PathBuf,
-    logs_process: Child,
 }
 
 impl Dpe for DpeDocker {}
@@ -59,34 +58,27 @@ impl DpeDocker {
             panic!("failed to bring up the dpe containers");
         }
 
-        let mut logs_process = Command::new("docker");
-        logs_process
-            .arg("compose")
-            .arg("-f")
-            .arg(&compose_file_path)
-            .arg("logs")
-            .arg("--follow")
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped());
-
-        println!("Running: {:?}", &logs_process);
-
-        let logs_process = logs_process.spawn().unwrap();
-
-        Self {
-            compose_file_path,
-            logs_process,
-        }
+        Self { compose_file_path }
     }
 }
 
 impl Drop for DpeDocker {
     fn drop(&mut self) {
-        if let Err(error) = self.logs_process.kill() {
-            eprintln!("failed to kill logs_process: {error:?}");
-        }
+        let mut logs_process = Command::new("docker");
+        logs_process
+            .arg("compose")
+            .arg("-f")
+            .arg(&self.compose_file_path)
+            .arg("logs");
 
-        print_child_process_output(&mut self.logs_process);
+        println!("Running: {:?}", &logs_process);
+
+        match logs_process.output() {
+            Ok(output) => print_process_output(&output),
+            Err(error) => {
+                eprintln!("error when reading docker-prometheus-exporter logs: {error:?}")
+            }
+        }
 
         let mut down = Command::new("docker");
         down.arg("compose")
