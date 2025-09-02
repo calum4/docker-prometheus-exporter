@@ -34,13 +34,17 @@
 
 The full changelog can be found at [CHANGELOG.md](CHANGELOG.md)
 
-## [1.1.3] - 2025-08-29
+### [2.0.0] - 2025-09-02
 
-### Changed
-- Updated misc dependencies
+#### Added
+- Support for cli args, try `--help`
+- Integration tests for all supported deployment methods, see [EXAMPLES.md](examples/EXAMPLES.md)
 
-### Security
-- Updated `slab` to patch [RUSTSEC-2025-0047 / GHSA-qx2v-8332-m4fv](https://github.com/tokio-rs/slab/security/advisories/GHSA-qx2v-8332-m4fv)
+#### Changed
+- BREAKING CHANGE: recoverable panics now instead exit with an error message
+
+#### Security
+- Updated `tracing-subscriber` to patch [CVE-2025-58160 / GHSA-xwfj-jgwm-7wp5](https://github.com/tokio-rs/tracing/security/advisories/GHSA-xwfj-jgwm-7wp5)
 
 ## Usage
 
