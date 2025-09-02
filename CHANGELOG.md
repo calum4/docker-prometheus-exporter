@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - BREAKING CHANGE: recoverable panics now instead exit with an error message 
 
+### Security
+- Updated `tracing-subscriber` to patch [CVE-2025-58160 / GHSA-xwfj-jgwm-7wp5](https://github.com/tokio-rs/tracing/security/advisories/GHSA-xwfj-jgwm-7wp5)
+
 ## [1.1.3] - 2025-08-29
 
 ### Changed
