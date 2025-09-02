@@ -4,6 +4,7 @@ use axum_client_ip::ClientIpSource;
 use clap::{Args, CommandFactory, FromArgMatches, Parser};
 use std::net::{IpAddr, Ipv4Addr};
 use std::sync::OnceLock;
+use tracing_subscriber::EnvFilter;
 
 #[derive(Parser, Debug)]
 #[command(version, about)]
@@ -18,6 +19,9 @@ pub(crate) struct Config {
     /// To see available options, visit the axum-client-ip [docs](https://github.com/imbolc/axum-client-ip/blob/2e3f353bbb04796aa6f7bde3e31a96129240afd5/src/lib.rs#L114)
     #[arg(long, default_value_t = ClientIpSource::ConnectInfo)]
     pub(crate) client_ip_source: ClientIpSource,
+    /// Filter log output, format documentation from [tracing_subscriber](https://docs.rs/tracing-subscriber/0.3/tracing_subscriber/filter/struct.EnvFilter.html)
+    #[arg(long, default_value_t)]
+    pub(crate) rust_log: EnvFilter,
     #[command(flatten)]
     pub(crate) metrics: Metrics,
 }

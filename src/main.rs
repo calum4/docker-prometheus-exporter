@@ -22,23 +22,23 @@ mod helpers;
 mod metrics;
 
 #[cfg(debug_assertions)]
-fn start_tracing() {
+fn start_tracing(env_filter: EnvFilter) {
     tracing_subscriber::fmt()
         .with_target(false)
         .with_file(true)
         .with_line_number(true)
-        .with_env_filter(EnvFilter::from_default_env())
+        .with_env_filter(env_filter)
         .with_span_events(FmtSpan::CLOSE)
         .init();
 }
 
 #[cfg(not(debug_assertions))]
-fn start_tracing() {
+fn start_tracing(env_filter: EnvFilter) {
     tracing_subscriber::fmt()
         .with_target(true)
         .with_file(false)
         .with_line_number(false)
-        .with_env_filter(EnvFilter::from_default_env())
+        .with_env_filter(env_filter)
         .with_span_events(FmtSpan::CLOSE)
         .init();
 }
@@ -60,7 +60,7 @@ async fn main() -> Result<(), Error> {
         Err(error) => error.exit(),
     };
 
-    start_tracing();
+    start_tracing(config.rust_log.clone());
 
     let docker = Docker::connect_with_defaults().map_err(Error::BollardConnect)?;
 
